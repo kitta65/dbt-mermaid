@@ -17,9 +17,8 @@ jobs:
           POSTGRES_PASSWORD: password
         ports:
           - 5432:5432
+        options: --hostname postgres
     steps:
       - uses: actions/checkout@v4
-      - name: wait for postgres
-        run: sleep 10
       - run: dbt compile --profiles-dir .
         working-directory: project
