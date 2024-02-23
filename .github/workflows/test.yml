@@ -9,7 +9,7 @@ jobs:
 
   dbt:
     runs-on: ubuntu-latest
-    container: ghcr.io/dbt-labs/postgres:latest
+    container: ghcr.io/dbt-labs/dbt-postgres:latest
     services:
       postgres:
         image: postgres:latest
