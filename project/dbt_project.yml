@@ -1,8 +1,8 @@
-name: 'dbt_mermaid'
-version: '1.0.0'
+name: "dbt_mermaid"
+version: "1.0.0"
 config-version: 2
 
-profile: 'dbt_mermaid'
+profile: "dbt_mermaid"
 
 model-paths: ["models"]
 clean-targets:

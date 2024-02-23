@@ -1,0 +1,7 @@
+# dbt
+project/target/
+project/dbt_packages/
+project/logs/
+project/.user.yml
+
+venv
