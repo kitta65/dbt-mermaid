@@ -17,5 +17,7 @@ jobs:
           POSTGRES_PASSWORD: password
     steps:
       - uses: actions/checkout@v4
+      - name: wait for postgres
+        run: sleep 10
       - run: dbt compile --profiles-dir .
         working-directory: project
