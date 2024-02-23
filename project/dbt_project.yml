@@ -1,0 +1,14 @@
+name: 'dbt_mermaid'
+version: '1.0.0'
+config-version: 2
+
+profile: 'dbt_mermaid'
+
+model-paths: ["models"]
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  dbt_mermaid:
+    +materialized: view
