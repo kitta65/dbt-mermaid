@@ -1,8 +1,24 @@
 on: [push]
 
 jobs:
-  test:
+  fmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: make test
+
+  dbt:
+    runs-on: ubuntu-latest
+    container: ghcr.io/dbt-labs/dbt-postgres:latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: --hostname postgres
+    steps:
+      - uses: actions/checkout@v4
+      - run: dbt compile --profiles-dir .
+        working-directory: project
