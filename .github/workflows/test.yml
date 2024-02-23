@@ -17,5 +17,5 @@ jobs:
           POSTGRES_PASSWORD: password
     steps:
       - uses: actions/checkout@v4
-      - run: dbt compile
+      - run: dbt compile --profiles-dir .
         working-directory: project
