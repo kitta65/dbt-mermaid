@@ -8,6 +8,7 @@ jobs:
       - run: make test
 
   dbt:
+    runs-on: ubuntu-latest
     container: ghcr.io/dbt-labs/postgres:latest
     services:
       postgres:
