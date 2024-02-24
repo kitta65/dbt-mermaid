@@ -5,7 +5,7 @@ import * as process from "process";
 
 export async function main() {
   const dbtDirectory = core.getInput("dbt-directory");
-  process.chdir(dbtDirectory)
+  process.chdir(dbtDirectory);
 
   const dbtVersion = core.getInput("dbt-version");
   // TODO support other adapters
