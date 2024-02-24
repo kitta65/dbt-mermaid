@@ -24818,9 +24818,12 @@ const core = __importStar(__nccwpck_require__(2186));
 const child_process_1 = __nccwpck_require__(2081);
 const process = __importStar(__nccwpck_require__(7282));
 async function main() {
+    const dbtDirectory = core.getInput("dbt-directory");
+    process.chdir(dbtDirectory);
     const dbtVersion = core.getInput("dbt-version");
     // TODO support other adapters
     await (0, child_process_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
+    // TODO return lineage.mermaid
     core.setOutput("filepath", `${process.cwd()}/target/manifest.json`);
 }
 exports.main = main;
