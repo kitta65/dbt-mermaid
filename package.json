@@ -6,7 +6,9 @@
   "main": "index.js",
   "scripts": {
     "build": "ncc build src/index.ts --license licenses.txt",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "format:write": "prettier . --write && pipx run --spec shandy-sqlfmt[jinjafmt] sqlfmt ./project/models",
+    "format:check": "prettier . --check && pipx run --spec shandy-sqlfmt[jinjafmt] sqlfmt --check ./project/models",
+    "test": "npm run format:check"
   },
   "keywords": [],
   "exports": {
