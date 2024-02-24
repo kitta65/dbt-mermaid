@@ -13,9 +13,9 @@ jobs:
       - run: npm ci
       - name: assert there is no change after build
         run: |
-          cp {src,/tmp}/index.js
+          cp {dist,/tmp}/index.js
           npm run build
-          diff {src,/tmp}/index.js
+          diff {dist,/tmp}/index.js
 
       - run: make test
 
