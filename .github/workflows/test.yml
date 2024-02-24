@@ -22,3 +22,12 @@ jobs:
       - uses: actions/checkout@v4
       - run: dbt compile --profiles-dir .
         working-directory: project
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: test-action
+        uses: ./
+        with:
+          dbt-version: 1.7
+      - run: echo {{ steps.test-action.outputs.filepath }}
