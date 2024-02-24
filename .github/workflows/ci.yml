@@ -1,0 +1,47 @@
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - run: npm ci
+      - name: assert there is no change after build
+        run: |
+          cp {dist,/tmp}/index.js
+          npm run build
+          diff {dist,/tmp}/index.js
+
+      - run: npm test
+
+  dbt:
+    runs-on: ubuntu-latest
+    container: ghcr.io/dbt-labs/dbt-postgres:latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: --hostname postgres
+    steps:
+      - uses: actions/checkout@v4
+      - run: dbt compile --profiles-dir .
+        working-directory: project
+
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: test-action
+        uses: ./
+        with:
+          dbt-version: 1.7
+          dbt-directory: project
+      - run: cat ${{ steps.test-action.outputs.filepath }}
