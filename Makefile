@@ -11,8 +11,4 @@ test:
 
 .phony: compile
 compile:
-	cd project && \
-	docker container run \
-		--rm \
-		--mount type=bind,source=$(ROOT)/project,target=/usr/app \
-		ghcr.io/dbt-labs/dbt-postgres ls --profiles-dir=/usr/app
+	docker container exec dbt-mermaid-dbt-1 dbt compile --profiles-dir=/usr/app
