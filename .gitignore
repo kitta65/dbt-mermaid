@@ -3,3 +3,5 @@ project/target/
 project/dbt_packages/
 project/logs/
 project/.user.yml
+
+graph.mermaid
