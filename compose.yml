@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: password
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres
+    entrypoint:
+      - tail
+      - -f
+      - /dev/null
+    volumes:
+      - type: bind
+        source: ./project
+        target: /usr/app

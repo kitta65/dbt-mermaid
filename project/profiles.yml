@@ -4,7 +4,7 @@ dbt_mermaid:
     dev:
       type: postgres
 
-      host: '{{ "postgres" if env_var("CI", "") == "true" else "localhost" }}'
+      host: postgres
       port: 5432
 
       dbname: postgres
