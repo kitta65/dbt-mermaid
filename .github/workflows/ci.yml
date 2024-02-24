@@ -11,14 +11,11 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run build
-      # https://stackoverflow.com/questions/2657935/checking-for-a-dirty-index-or-untracked-files-with-git
-      - name: assert there is no change
-        run: git diff-files --quiet
-      - if: failure()
+      - name: assert there is no change after build
         run: |
-          git status
-          git diff
+          cp {src,/tmp}/index.js
+          npm run build
+          diff {src,/tmp}/index.js
 
       - run: make test
 
