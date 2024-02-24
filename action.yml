@@ -10,4 +10,4 @@ outputs:
     description: "The filepath of the mermaid flowchart"
 runs:
   using: "node20"
-  main: "index.js"
+  main: "dist/index.js"
