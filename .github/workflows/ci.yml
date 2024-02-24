@@ -5,6 +5,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - run: npm run build
+      # https://stackoverflow.com/questions/2657935/checking-for-a-dirty-index-or-untracked-files-with-git
+      - name: assert there is no change
+        run: git diff-files --quiet
+
       - run: make test
 
   dbt:
