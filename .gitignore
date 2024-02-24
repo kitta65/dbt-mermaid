@@ -1,3 +1,6 @@
+# node
+node_modules/
+
 # dbt
 project/target/
 project/dbt_packages/

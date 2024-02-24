@@ -1,0 +1,13 @@
+name: "dbt mermaid"
+description: "Draw mermaid flowchart from your dbt project"
+inputs:
+  dbt-version:
+    description: "dbt version"
+    required: true
+    default: "1.7"
+outputs:
+  filepath:
+    description: "The filepath of the mermaid flowchart"
+runs:
+  using: "node20"
+  main: "index.js"
