@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: source
+    database: postgres
+    tables:
+      - name: events
+      - name: users
+      - name: orders
+      - name: products
