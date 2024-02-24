@@ -15,6 +15,10 @@ jobs:
       # https://stackoverflow.com/questions/2657935/checking-for-a-dirty-index-or-untracked-files-with-git
       - name: assert there is no change
         run: git diff-files --quiet
+      - if: failure()
+        run: |
+          git status
+          git diff
 
       - run: make test
 
