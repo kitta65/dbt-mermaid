@@ -43,4 +43,5 @@ jobs:
         uses: ./
         with:
           dbt-version: 1.7
-      - run: echo {{ steps.test-action.outputs.filepath }}
+        working-directory: project
+      - run: cat {{ steps.test-action.outputs.filepath }} | jq
