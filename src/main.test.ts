@@ -17,7 +17,7 @@ describe("flowchart", () => {
     expect(actual).toBe(expected);
   });
 
-  test("draw empty flowchart", () => {
+  test("draw simple flowchart", () => {
     const manifest: Manifest = {
       sources: {},
       nodes: {
