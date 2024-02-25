@@ -26,8 +26,8 @@ export async function main() {
     .then((buffer) => String(buffer))
     .then((json) => JSON.parse(json));
   const outpath = `${process.cwd()}/lineage.mermaid`;
-  const filepath = draw(outpath, manifest);
-  core.setOutput("filepath", filepath);
+  await draw(outpath, manifest);
+  core.setOutput("filepath", outpath);
 }
 
 async function draw(outpath: string, manifest: Manifest) {
