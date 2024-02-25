@@ -6,9 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build": "ncc build src/index.ts --license licenses.txt",
-    "format:write": "prettier . --write && pipx run --spec shandy-sqlfmt[jinjafmt] sqlfmt ./project/models",
-    "format:check": "prettier . --check && pipx run --spec shandy-sqlfmt[jinjafmt] sqlfmt --check ./project/models",
-    "test": "npm run format:check"
+    "format": "prettier . --write && pipx run --spec shandy-sqlfmt[jinjafmt] sqlfmt ./project/models",
+    "test": "jest"
   },
   "keywords": [],
   "exports": {
@@ -28,7 +27,7 @@
     "typescript": "^5.3.3"
   },
   "precommit": [
-    "format:write",
+    "format",
     "build",
     "test"
   ]
