@@ -43,5 +43,5 @@ jobs:
         uses: ./
         with:
           dbt-version: 1.7
-          dbt-directory: project
+          dbt-project: project
       - run: cat ${{ steps.test-action.outputs.filepath }}

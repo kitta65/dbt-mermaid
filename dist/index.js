@@ -24778,27 +24778,42 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.flowchart = exports.main = void 0;
 const fs = __importStar(__nccwpck_require__(3292));
 const core = __importStar(__nccwpck_require__(2186));
-// import * as github from "@actions/github";
 const process = __importStar(__nccwpck_require__(7282));
 const utils_1 = __nccwpck_require__(1314);
 async function main() {
-    const dbtDirectory = core.getInput("dbt-directory");
-    process.chdir(dbtDirectory);
-    // create manifest.json
+    const dbtVersion = core.getInput("dbt-version");
+    const mainProject = core.getInput("dbt-project");
+    process.chdir(mainProject);
+    await writeManifest(dbtVersion);
+    const mainManifest = await readManifest("./target/manifest.json");
+    const mainFlowchart = flowchart(mainManifest);
+    const mainOutpath = `${process.cwd()}/lineage.mermaid`;
+    let finalFlowchart = mainFlowchart;
+    const anotherProject = core.getInput("dbt-project-to-compare-with");
+    if (anotherProject) {
+        process.chdir(anotherProject);
+        await writeManifest(dbtVersion);
+        const anotherManifest = await readManifest("./target/manifest.json");
+        const anotherFlowchart = flowchart(anotherManifest);
+        // TODO show difference
+        finalFlowchart = anotherFlowchart;
+    }
+    await fs.writeFile(mainOutpath, finalFlowchart);
+    core.setOutput("filepath", mainOutpath);
+}
+exports.main = main;
+async function writeManifest(dbtVer) {
     const dbtVersion = core.getInput("dbt-version");
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt deps`);
     // TODO support other adapters
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
-    const manifest = await fs
-        .readFile("./target/manifest.json")
+}
+function readManifest(filepath) {
+    return fs
+        .readFile(filepath)
         .then((buffer) => String(buffer))
         .then((json) => JSON.parse(json));
-    const mermaid = flowchart(manifest);
-    const outpath = `${process.cwd()}/lineage.mermaid`;
-    await fs.writeFile(outpath, mermaid);
-    core.setOutput("filepath", outpath);
 }
-exports.main = main;
 function flowchart(manifest) {
     const resources = {
         ...manifest.sources,
