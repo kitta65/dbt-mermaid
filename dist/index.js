@@ -24742,44 +24742,6 @@ try {
 catch (error) {
     core.setFailed(String(error));
 }
-// const fs = require("fs");
-// const manifest = require("./project/target/manifest.json");
-//
-// const idMap = {};
-// let uniqueNumber = 0;
-// for (const key of Object.keys(manifest.nodes)) {
-//   uniqueNumber++;
-//   idMap[key] = `id${uniqueNumber}`;
-// }
-// for (const key of Object.keys(manifest.sources)) {
-//   uniqueNumber++;
-//   idMap[key] = `id${uniqueNumber}`;
-// }
-// for (const key of Object.keys(manifest.exposures)) {
-//   uniqueNumber++;
-//   idMap[key] = `id${uniqueNumber}`;
-// }
-//
-// let mermaid = "";
-// mermaid += "flowchart LR\n";
-// mermaid += "  classDef source fill:green,stroke-width:0px,color:white;\n";
-// mermaid += "  classDef model fill:blue,stroke-width:0px,color:white;\n";
-// mermaid += "  classDef exposure fill:orange,stroke-width:0px,color:white;\n";
-//
-// for (const [dbtId, mermaidId] of Object.entries(idMap)) {
-//   const type = dbtId.split(".")[0];
-//   mermaid += `  ${mermaidId}("${dbtId}");\n`;
-//   mermaid += `  class ${mermaidId} ${type};\n`;
-// }
-//
-// for (const [parent, children] of Object.entries(manifest.child_map)) {
-//   for (const child of children) {
-//     idMap[parent] || console.log(parent);
-//     mermaid += `  ${idMap[parent]} --> ${idMap[child]};\n`;
-//   }
-// }
-//
-// fs.writeFileSync("graph.mermaid", mermaid);
 
 
 /***/ }),
@@ -24814,19 +24776,97 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.main = void 0;
+const fs = __importStar(__nccwpck_require__(3292));
 const core = __importStar(__nccwpck_require__(2186));
-const child_process_1 = __nccwpck_require__(2081);
+// import * as github from "@actions/github";
 const process = __importStar(__nccwpck_require__(7282));
+const utils_1 = __nccwpck_require__(1314);
 async function main() {
     const dbtDirectory = core.getInput("dbt-directory");
     process.chdir(dbtDirectory);
+    // create manifest.json
     const dbtVersion = core.getInput("dbt-version");
+    await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt deps`);
     // TODO support other adapters
-    await (0, child_process_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
-    // TODO return lineage.mermaid
-    core.setOutput("filepath", `${process.cwd()}/target/manifest.json`);
+    await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
+    const manifest = await fs
+        .readFile("./target/manifest.json")
+        .then((buffer) => String(buffer))
+        .then((json) => JSON.parse(json));
+    const outpath = `${process.cwd()}/lineage.mermaid`;
+    await draw(outpath, manifest);
+    core.setOutput("filepath", outpath);
 }
 exports.main = main;
+async function draw(outpath, manifest) {
+    const resources = {
+        ...manifest.nodes,
+        ...manifest.sources,
+        ...manifest.exposures,
+    };
+    const name2id = {};
+    let id = 0;
+    for (const name of Object.keys(resources)) {
+        id++;
+        name2id[name] = id;
+    }
+    const statements = [];
+    statements.push("classDef source fill:green,stroke-width:0px,color:white");
+    statements.push("classDef model fill:blue,stroke-width:0px,color:white");
+    statements.push("classDef exposure fill:orange,stroke-width:0px,color:white");
+    for (const [name, id] of Object.entries(name2id)) {
+        const type = name.split(".")[0];
+        statements.push(`${id}("${name}")`);
+        statements.push(`class ${id} ${type}`);
+    }
+    for (const [parent, children] of Object.entries(manifest.child_map)) {
+        for (const child of children) {
+            statements.push(`${name2id[parent]} --> ${name2id[child]}`);
+        }
+    }
+    const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
+    await fs.writeFile(outpath, mermaid);
+}
+
+
+/***/ }),
+
+/***/ 1314:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.exec = void 0;
+const node_util_1 = __importDefault(__nccwpck_require__(7261));
+const child_process = __importStar(__nccwpck_require__(2081));
+exports.exec = node_util_1.default.promisify(child_process.exec);
 
 
 /***/ }),
@@ -24900,6 +24940,14 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 3292:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs/promises");
 
 /***/ }),
 
