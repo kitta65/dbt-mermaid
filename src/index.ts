@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { main } from "src/main";
+import { main } from "./main";
 
 try {
   main();

@@ -24775,7 +24775,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.main = void 0;
+exports.flowchart = exports.main = void 0;
 const fs = __importStar(__nccwpck_require__(3292));
 const core = __importStar(__nccwpck_require__(2186));
 // import * as github from "@actions/github";
@@ -24793,15 +24793,16 @@ async function main() {
         .readFile("./target/manifest.json")
         .then((buffer) => String(buffer))
         .then((json) => JSON.parse(json));
+    const mermaid = flowchart(manifest);
     const outpath = `${process.cwd()}/lineage.mermaid`;
-    await draw(outpath, manifest);
+    await fs.writeFile(outpath, mermaid);
     core.setOutput("filepath", outpath);
 }
 exports.main = main;
-async function draw(outpath, manifest) {
+function flowchart(manifest) {
     const resources = {
-        ...manifest.nodes,
         ...manifest.sources,
+        ...manifest.nodes,
         ...manifest.exposures,
     };
     const name2id = {};
@@ -24815,8 +24816,10 @@ async function draw(outpath, manifest) {
     statements.push("classDef model fill:blue,stroke-width:0px,color:white");
     statements.push("classDef exposure fill:orange,stroke-width:0px,color:white");
     for (const [name, id] of Object.entries(name2id)) {
-        const type = name.split(".")[0];
-        statements.push(`${id}("${name}")`);
+        const splited = name.split(".");
+        const type = splited[0];
+        const shortend = splited.slice(1).join(".");
+        statements.push(`${id}("${shortend}")`);
         statements.push(`class ${id} ${type}`);
     }
     for (const [parent, children] of Object.entries(manifest.child_map)) {
@@ -24825,8 +24828,9 @@ async function draw(outpath, manifest) {
         }
     }
     const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
-    await fs.writeFile(outpath, mermaid);
+    return mermaid;
 }
+exports.flowchart = flowchart;
 
 
 /***/ }),
