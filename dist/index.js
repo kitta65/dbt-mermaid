@@ -24790,7 +24790,7 @@ async function main() {
     // TODO support other adapters
     await (0, child_process_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
     const manifest = await fs
-        .readFile("./manifest.json")
+        .readFile("./target/manifest.json")
         .then((buffer) => String(buffer))
         .then((json) => JSON.parse(json));
     const outpath = `${process.cwd()}/lineage.mermaid`;

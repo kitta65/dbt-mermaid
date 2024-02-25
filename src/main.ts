@@ -22,7 +22,7 @@ export async function main() {
   await exec(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
 
   const manifest: Manifest = await fs
-    .readFile("./manifest.json")
+    .readFile("./target/manifest.json")
     .then((buffer) => String(buffer))
     .then((json) => JSON.parse(json));
   const outpath = `${process.cwd()}/lineage.mermaid`;
