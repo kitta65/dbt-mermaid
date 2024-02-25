@@ -2,10 +2,10 @@ import * as fs from "fs/promises";
 import * as core from "@actions/core";
 // import * as github from "@actions/github";
 import * as process from "process";
-import { exec } from "src/utils";
+import { exec } from "./utils";
 
 export type Manifest = {
-  child_map: string;
+  child_map: { [key: string]: string[] };
   nodes: { [key: string]: unknown };
   sources: { [key: string]: unknown };
   exposures: { [key: string]: unknown };
@@ -25,15 +25,17 @@ export async function main() {
     .readFile("./target/manifest.json")
     .then((buffer) => String(buffer))
     .then((json) => JSON.parse(json));
+  const mermaid = flowchart(manifest);
+
   const outpath = `${process.cwd()}/lineage.mermaid`;
-  await draw(outpath, manifest);
+  await fs.writeFile(outpath, mermaid);
   core.setOutput("filepath", outpath);
 }
 
-async function draw(outpath: string, manifest: Manifest) {
+export function flowchart(manifest: Manifest): string {
   const resources = {
-    ...manifest.nodes,
     ...manifest.sources,
+    ...manifest.nodes,
     ...manifest.exposures,
   };
   const name2id: { [key: string]: number } = {};
@@ -49,8 +51,10 @@ async function draw(outpath: string, manifest: Manifest) {
   statements.push("classDef exposure fill:orange,stroke-width:0px,color:white");
 
   for (const [name, id] of Object.entries(name2id)) {
-    const type = name.split(".")[0];
-    statements.push(`${id}("${name}")`);
+    const splited = name.split(".");
+    const type = splited[0];
+    const shortend = splited.slice(1).join(".");
+    statements.push(`${id}("${shortend}")`);
     statements.push(`class ${id} ${type}`);
   }
 
@@ -62,5 +66,5 @@ async function draw(outpath: string, manifest: Manifest) {
 
   const mermaid =
     "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
-  await fs.writeFile(outpath, mermaid);
+  return mermaid;
 }

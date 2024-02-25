@@ -20,10 +20,12 @@
     "@actions/github": "^6.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.12",
     "@types/node": "^20.11.20",
     "@vercel/ncc": "^0.38.1",
     "pre-commit": "^1.2.2",
     "prettier": "^3.2.5",
+    "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   },
   "precommit": [
