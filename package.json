@@ -23,7 +23,13 @@
   "devDependencies": {
     "@types/node": "^20.11.20",
     "@vercel/ncc": "^0.38.1",
+    "pre-commit": "^1.2.2",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"
-  }
+  },
+  "precommit": [
+    "format:write",
+    "build",
+    "test"
+  ]
 }
