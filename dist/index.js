@@ -24742,44 +24742,6 @@ try {
 catch (error) {
     core.setFailed(String(error));
 }
-// const fs = require("fs");
-// const manifest = require("./project/target/manifest.json");
-//
-// const idMap = {};
-// let uniqueNumber = 0;
-// for (const key of Object.keys(manifest.nodes)) {
-//   uniqueNumber++;
-//   idMap[key] = `id${uniqueNumber}`;
-// }
-// for (const key of Object.keys(manifest.sources)) {
-//   uniqueNumber++;
-//   idMap[key] = `id${uniqueNumber}`;
-// }
-// for (const key of Object.keys(manifest.exposures)) {
-//   uniqueNumber++;
-//   idMap[key] = `id${uniqueNumber}`;
-// }
-//
-// let mermaid = "";
-// mermaid += "flowchart LR\n";
-// mermaid += "  classDef source fill:green,stroke-width:0px,color:white;\n";
-// mermaid += "  classDef model fill:blue,stroke-width:0px,color:white;\n";
-// mermaid += "  classDef exposure fill:orange,stroke-width:0px,color:white;\n";
-//
-// for (const [dbtId, mermaidId] of Object.entries(idMap)) {
-//   const type = dbtId.split(".")[0];
-//   mermaid += `  ${mermaidId}("${dbtId}");\n`;
-//   mermaid += `  class ${mermaidId} ${type};\n`;
-// }
-//
-// for (const [parent, children] of Object.entries(manifest.child_map)) {
-//   for (const child of children) {
-//     idMap[parent] || console.log(parent);
-//     mermaid += `  ${idMap[parent]} --> ${idMap[child]};\n`;
-//   }
-// }
-//
-// fs.writeFileSync("graph.mermaid", mermaid);
 
 
 /***/ }),
@@ -24814,19 +24776,57 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.main = void 0;
+const fs = __importStar(__nccwpck_require__(3292));
 const core = __importStar(__nccwpck_require__(2186));
+// import * as github from "@actions/github";
 const child_process_1 = __nccwpck_require__(2081);
 const process = __importStar(__nccwpck_require__(7282));
 async function main() {
     const dbtDirectory = core.getInput("dbt-directory");
     process.chdir(dbtDirectory);
+    // create manifest.json
     const dbtVersion = core.getInput("dbt-version");
+    await (0, child_process_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt deps`);
     // TODO support other adapters
     await (0, child_process_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
-    // TODO return lineage.mermaid
+    const manifest = await fs
+        .readFile("./manifest.json")
+        .then((buffer) => String(buffer))
+        .then((json) => JSON.parse(json));
+    const outpath = `${process.cwd()}/lineage.mermaid`;
+    const filepath = draw(outpath, manifest);
     core.setOutput("filepath", `${process.cwd()}/target/manifest.json`);
 }
 exports.main = main;
+async function draw(outpath, manifest) {
+    const resources = {
+        ...manifest.nodes,
+        ...manifest.sources,
+        ...manifest.exposures,
+    };
+    const name2id = {};
+    let id = 0;
+    for (const name of Object.keys(resources)) {
+        id++;
+        name2id[name] = id;
+    }
+    const statements = [];
+    statements.push("classDef source fill:green,stroke-width:0px,color:white");
+    statements.push("classDef model fill:blue,stroke-width:0px,color:white");
+    statements.push("classDef exposure fill:orange,stroke-width:0px,color:white");
+    for (const [name, id] of Object.entries(name2id)) {
+        const type = name.split(".")[0];
+        statements.push(`${id}("${name}")`);
+        statements.push(`class ${id} ${type}`);
+    }
+    for (const [parent, children] of Object.entries(manifest.child_map)) {
+        for (const child of children) {
+            statements.push(`${name2id[parent]} --> ${name2id[child]}`);
+        }
+    }
+    const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
+    await fs.writeFile(outpath, mermaid);
+}
 
 
 /***/ }),
@@ -24900,6 +24900,14 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 3292:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs/promises");
 
 /***/ }),
 
