@@ -27,7 +27,7 @@ export async function main() {
     .then((json) => JSON.parse(json));
   const outpath = `${process.cwd()}/lineage.mermaid`;
   const filepath = draw(outpath, manifest);
-  core.setOutput("filepath", `${process.cwd()}/target/manifest.json`);
+  core.setOutput("filepath", filepath);
 }
 
 async function draw(outpath: string, manifest: Manifest) {
