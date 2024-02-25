@@ -1,8 +1,8 @@
 import * as fs from "fs/promises";
 import * as core from "@actions/core";
 // import * as github from "@actions/github";
-import { exec } from "child_process";
 import * as process from "process";
+import { exec } from "src/utils";
 
 export type Manifest = {
   child_map: string;
