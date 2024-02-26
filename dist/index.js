@@ -24820,26 +24820,24 @@ function flowchart(manifest) {
         ...manifest.nodes,
         ...manifest.exposures,
     };
-    const name2id = {};
-    let id = 0;
-    for (const name of Object.keys(resources)) {
-        id++;
-        name2id[name] = id;
-    }
     const statements = [];
     statements.push("classDef source fill:green,stroke-width:0px,color:white");
     statements.push("classDef model fill:blue,stroke-width:0px,color:white");
     statements.push("classDef exposure fill:orange,stroke-width:0px,color:white");
-    for (const [name, id] of Object.entries(name2id)) {
+    for (const name of Object.keys(resources)) {
         const splited = name.split(".");
-        const type = splited[0];
-        const shortend = splited.slice(1).join(".");
-        statements.push(`${id}("${shortend}")`);
-        statements.push(`class ${id} ${type}`);
+        const class_ = splited[0];
+        const text = splited.slice(1).join(".");
+        // NOTE
+        // name may contain special character (e.g. white space)
+        // which is not allowed in flowchart id
+        const id = (0, utils_1.b2a)(name);
+        statements.push(`${id}("${text}")`);
+        statements.push(`class ${id} ${class_}`);
     }
     for (const [parent, children] of Object.entries(manifest.child_map)) {
         for (const child of children) {
-            statements.push(`${name2id[parent]} --> ${name2id[child]}`);
+            statements.push(`${(0, utils_1.b2a)(parent)} --> ${(0, utils_1.b2a)(child)}`);
         }
     }
     const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
@@ -24882,10 +24880,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.exec = void 0;
+exports.a2b = exports.b2a = exports.exec = void 0;
 const node_util_1 = __importDefault(__nccwpck_require__(7261));
 const child_process = __importStar(__nccwpck_require__(2081));
 exports.exec = node_util_1.default.promisify(child_process.exec);
+function b2a(str) {
+    const b64 = btoa(encodeURIComponent(str))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=/g, "");
+    return b64;
+}
+exports.b2a = b2a;
+function a2b(b64) {
+    // it seems that padding (=) is not needed
+    const str = b64.replace(/-/g, "+").replace(/_/g, "\\");
+    return decodeURIComponent(str);
+}
+exports.a2b = a2b;
 
 
 /***/ }),

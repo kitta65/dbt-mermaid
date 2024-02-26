@@ -1,7 +1,7 @@
 import * as fs from "fs/promises";
 import * as core from "@actions/core";
 import * as process from "process";
-import { exec } from "./utils";
+import { a2b, b2a, exec } from "./utils";
 
 export type Manifest = {
   child_map: { [key: string]: string[] };
@@ -55,29 +55,26 @@ export function flowchart(manifest: Manifest): string {
     ...manifest.nodes,
     ...manifest.exposures,
   };
-  const name2id: { [key: string]: number } = {};
-  let id = 0;
-  for (const name of Object.keys(resources)) {
-    id++;
-    name2id[name] = id;
-  }
-
   const statements: string[] = [];
   statements.push("classDef source fill:green,stroke-width:0px,color:white");
   statements.push("classDef model fill:blue,stroke-width:0px,color:white");
   statements.push("classDef exposure fill:orange,stroke-width:0px,color:white");
 
-  for (const [name, id] of Object.entries(name2id)) {
+  for (const name of Object.keys(resources)) {
     const splited = name.split(".");
-    const type = splited[0];
-    const shortend = splited.slice(1).join(".");
-    statements.push(`${id}("${shortend}")`);
-    statements.push(`class ${id} ${type}`);
+    const class_ = splited[0];
+    const text = splited.slice(1).join(".");
+    // NOTE
+    // name may contain special character (e.g. white space)
+    // which is not allowed in flowchart id
+    const id = b2a(name);
+    statements.push(`${id}("${text}")`);
+    statements.push(`class ${id} ${class_}`);
   }
 
   for (const [parent, children] of Object.entries(manifest.child_map)) {
     for (const child of children) {
-      statements.push(`${name2id[parent]} --> ${name2id[child]}`);
+      statements.push(`${b2a(parent)} --> ${b2a(child)}`);
     }
   }
 
