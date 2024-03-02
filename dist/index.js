@@ -24835,7 +24835,7 @@ function nodes(mainManifest, anotherManifest) {
     }
     if (anotherManifest) {
         for (const key of Object.keys(resources)) {
-            resources[key] = "deleted";
+            resources[key] = "new";
         }
         for (const [key, value] of Object.entries({
             ...anotherManifest.sources,
@@ -24853,7 +24853,7 @@ function nodes(mainManifest, anotherManifest) {
                 }
             }
             else {
-                resources[key] = "new";
+                resources[key] = "deleted";
             }
         }
     }
@@ -24908,12 +24908,12 @@ function links(mainManifest, anotherManifest) {
     }
     if (anotherManifest) {
         for (const key of Object.keys(links)) {
-            links[key] = "deleted";
+            links[key] = "new";
         }
         for (const [parent, children] of Object.entries(anotherManifest.child_map)) {
             for (const child of children) {
                 const key = `${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`;
-                links[key] = key in links ? "identical" : "new";
+                links[key] = key in links ? "identical" : "deleted";
             }
         }
     }
