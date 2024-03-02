@@ -24782,25 +24782,25 @@ const process = __importStar(__nccwpck_require__(7282));
 const utils_1 = __nccwpck_require__(1314);
 const types_1 = __nccwpck_require__(5077);
 async function main() {
+    const workingDirectory = process.cwd();
     const dbtVersion = core.getInput("dbt-version");
     const mainProject = core.getInput("dbt-project");
     process.chdir(mainProject);
     await writeManifest(dbtVersion);
     const mainManifest = await readManifest("./target/manifest.json");
-    const mainFlowchart = flowchart(mainManifest);
-    const mainOutpath = `${process.cwd()}/lineage.mermaid`;
-    let finalFlowchart = mainFlowchart;
+    process.chdir(workingDirectory);
+    let anotherManifest;
     const anotherProject = core.getInput("dbt-project-to-compare-with");
     if (anotherProject) {
         process.chdir(anotherProject);
         await writeManifest(dbtVersion);
-        const anotherManifest = await readManifest("./target/manifest.json");
-        const anotherFlowchart = flowchart(anotherManifest);
-        // TODO show difference
-        finalFlowchart = anotherFlowchart;
+        anotherManifest = await readManifest("./target/manifest.json");
+        process.chdir(workingDirectory);
     }
-    await fs.writeFile(mainOutpath, finalFlowchart);
-    core.setOutput("filepath", mainOutpath);
+    const chart = flowchart(mainManifest, anotherManifest);
+    const outpath = `${process.cwd()}/lineage.mermaid`;
+    await fs.writeFile(outpath, chart);
+    core.setOutput("filepath", outpath);
 }
 exports.main = main;
 async function writeManifest(dbtVer) {
@@ -24815,7 +24815,7 @@ function readManifest(filepath) {
         .then((buffer) => String(buffer))
         .then((json) => JSON.parse(json));
 }
-function flowchart(mainManifest, anotherManifest = null) {
+function flowchart(mainManifest, anotherManifest) {
     const statements = [
         ...nodes(mainManifest, anotherManifest),
         ...links(mainManifest, anotherManifest),
@@ -24824,7 +24824,7 @@ function flowchart(mainManifest, anotherManifest = null) {
     return mermaid;
 }
 exports.flowchart = flowchart;
-function nodes(mainManifest, anotherManifest = null) {
+function nodes(mainManifest, anotherManifest) {
     let resources = {};
     for (const key of Object.keys({
         ...mainManifest.sources,
@@ -24898,7 +24898,7 @@ function nodes(mainManifest, anotherManifest = null) {
     }
     return statements;
 }
-function links(mainManifest, anotherManifest = null) {
+function links(mainManifest, anotherManifest) {
     let links = {};
     for (const [parent, children] of Object.entries(mainManifest.child_map)) {
         for (const child of children) {

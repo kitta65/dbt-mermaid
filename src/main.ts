@@ -5,28 +5,27 @@ import { b2a, exec } from "./utils";
 import { Manifest, Status, isNode } from "./types";
 
 export async function main() {
+  const workingDirectory = process.cwd();
   const dbtVersion = core.getInput("dbt-version");
 
   const mainProject = core.getInput("dbt-project");
   process.chdir(mainProject);
   await writeManifest(dbtVersion);
   const mainManifest = await readManifest("./target/manifest.json");
-  const mainFlowchart = flowchart(mainManifest);
-  const mainOutpath = `${process.cwd()}/lineage.mermaid`;
+  process.chdir(workingDirectory);
 
-  let finalFlowchart = mainFlowchart;
+  let anotherManifest;
   const anotherProject = core.getInput("dbt-project-to-compare-with");
   if (anotherProject) {
     process.chdir(anotherProject);
     await writeManifest(dbtVersion);
-    const anotherManifest = await readManifest("./target/manifest.json");
-    const anotherFlowchart = flowchart(anotherManifest);
-    // TODO show difference
-    finalFlowchart = anotherFlowchart;
+    anotherManifest = await readManifest("./target/manifest.json");
+    process.chdir(workingDirectory);
   }
-
-  await fs.writeFile(mainOutpath, finalFlowchart);
-  core.setOutput("filepath", mainOutpath);
+  const chart = flowchart(mainManifest, anotherManifest);
+  const outpath = `${process.cwd()}/lineage.mermaid`;
+  await fs.writeFile(outpath, chart);
+  core.setOutput("filepath", outpath);
 }
 
 async function writeManifest(dbtVer: string) {
@@ -45,7 +44,7 @@ function readManifest(filepath: string): Promise<Manifest> {
 
 export function flowchart(
   mainManifest: Manifest,
-  anotherManifest: Manifest | null = null,
+  anotherManifest?: Manifest,
 ): string {
   const statements = [
     ...nodes(mainManifest, anotherManifest),
@@ -57,10 +56,7 @@ export function flowchart(
   return mermaid;
 }
 
-function nodes(
-  mainManifest: Manifest,
-  anotherManifest: Manifest | null = null,
-): string[] {
+function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
   let resources: { [key: string]: Status } = {};
   for (const key of Object.keys({
     ...mainManifest.sources,
@@ -135,10 +131,7 @@ function nodes(
   return statements;
 }
 
-function links(
-  mainManifest: Manifest,
-  anotherManifest: Manifest | null = null,
-): string[] {
+function links(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
   let links: { [key: string]: Status } = {};
   for (const [parent, children] of Object.entries(mainManifest.child_map)) {
     for (const child of children) {

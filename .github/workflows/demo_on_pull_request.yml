@@ -6,16 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: main
       - uses: actions/checkout@v4
         with:
           ref: "${{ github.base_ref }}"
-          path: another
+          path: base
       - id: dbt-mermaid
         uses: ./
         with:
           dbt-version: 1.7
-          dbt-project: main/project
-          dbt-project-to-compare-with: another/project
+          dbt-project: project
+          dbt-project-to-compare-with: base/project
       - run: cat ${{ steps.dbt-mermaid.outputs.filepath }}
