@@ -165,7 +165,7 @@ function links(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
         break;
       case "new":
         statements.push(`${parent} --> ${child}`);
-        statements.push(`linkStyle ${idx} stroke-width:2px`);
+        statements.push(`linkStyle ${idx} stroke-width:4px`);
         break;
     }
     idx++;

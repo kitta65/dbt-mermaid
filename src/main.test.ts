@@ -88,7 +88,7 @@ describe("flowchart", () => {
   style ZXhwb3N1cmUucHJvamVjdC5j color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
   c291cmNlLnByb2plY3QuYS5h --> bW9kZWwucHJvamVjdC5i;
   bW9kZWwucHJvamVjdC5i --> ZXhwb3N1cmUucHJvamVjdC5k;
-  linkStyle 1 stroke-width:2px;
+  linkStyle 1 stroke-width:4px;
   bW9kZWwucHJvamVjdC5i -.-> ZXhwb3N1cmUucHJvamVjdC5j;
 `;
     expect(actual).toBe(expected);
