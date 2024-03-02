@@ -91,7 +91,7 @@ function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
   const statements: string[] = [];
   for (const [key, value] of Object.entries(resources)) {
     const splited = key.split(".");
-    let text = splited.slice(1).join(".");
+    let text = splited.slice(2).join(".");
     const style: string[] = ["color:white"];
     switch (splited[0]) {
       case "source":

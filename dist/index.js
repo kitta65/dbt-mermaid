@@ -24860,7 +24860,7 @@ function nodes(mainManifest, anotherManifest) {
     const statements = [];
     for (const [key, value] of Object.entries(resources)) {
         const splited = key.split(".");
-        let text = splited.slice(1).join(".");
+        let text = splited.slice(2).join(".");
         const style = ["color:white"];
         switch (splited[0]) {
             case "source":

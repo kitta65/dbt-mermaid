@@ -18,26 +18,29 @@ describe("flowchart", () => {
   test("draw simple flowchart", () => {
     const manifest: Manifest = {
       sources: {
-        "source.a.a": "anyvalue",
+        "source.project.a.a": "anyvalue",
       },
       nodes: {
-        "model.b": { check_sum: { check_sum: "anyvalue" } },
+        "model.project.b": { check_sum: { check_sum: "anyvalue" } },
       },
       exposures: {
-        "exposure.c": "anyvalue",
+        "exposure.project.c": "anyvalue",
       },
-      child_map: { "source.a.a": ["model.b"], "model.b": ["exposure.c"] },
+      child_map: {
+        "source.project.a.a": ["model.project.b"],
+        "model.project.b": ["exposure.project.c"],
+      },
     };
     const actual = flowchart(manifest);
     const expected = `flowchart LR
-  c291cmNlLmEuYQ("a.a");
-  style c291cmNlLmEuYQ color:white,fill:green,stroke-width:0px;
-  bW9kZWwuYg("b");
-  style bW9kZWwuYg color:white,fill:blue,stroke-width:0px;
-  ZXhwb3N1cmUuYw("c");
-  style ZXhwb3N1cmUuYw color:white,fill:orange,stroke-width:0px;
-  c291cmNlLmEuYQ --> bW9kZWwuYg;
-  bW9kZWwuYg --> ZXhwb3N1cmUuYw;
+  c291cmNlLnByb2plY3QuYS5h("a.a");
+  style c291cmNlLnByb2plY3QuYS5h color:white,fill:green,stroke-width:0px;
+  bW9kZWwucHJvamVjdC5i("b");
+  style bW9kZWwucHJvamVjdC5i color:white,fill:blue,stroke-width:0px;
+  ZXhwb3N1cmUucHJvamVjdC5j("c");
+  style ZXhwb3N1cmUucHJvamVjdC5j color:white,fill:orange,stroke-width:0px;
+  c291cmNlLnByb2plY3QuYS5h --> bW9kZWwucHJvamVjdC5i;
+  bW9kZWwucHJvamVjdC5i --> ZXhwb3N1cmUucHJvamVjdC5j;
 `;
     expect(actual).toBe(expected);
   });
