@@ -24835,7 +24835,7 @@ function nodes(mainManifest, anotherManifest) {
     }
     if (anotherManifest) {
         for (const key of Object.keys(resources)) {
-            resources[key] = "deleted";
+            resources[key] = "new";
         }
         for (const [key, value] of Object.entries({
             ...anotherManifest.sources,
@@ -24853,7 +24853,7 @@ function nodes(mainManifest, anotherManifest) {
                 }
             }
             else {
-                resources[key] = "new";
+                resources[key] = "deleted";
             }
         }
     }
@@ -24861,7 +24861,7 @@ function nodes(mainManifest, anotherManifest) {
     for (const [key, value] of Object.entries(resources)) {
         const splited = key.split(".");
         let text = splited.slice(2).join(".");
-        const style = ["color:white"];
+        const style = ["color:white", "stroke:black"];
         switch (splited[0]) {
             case "source":
                 style.push("fill:green");
@@ -24883,7 +24883,6 @@ function nodes(mainManifest, anotherManifest) {
                 break;
             case "modified":
                 style.push("stroke-width:4px");
-                text = `**${text}**`;
                 break;
             case "new":
                 style.push("stroke-width:4px");
@@ -24909,19 +24908,18 @@ function links(mainManifest, anotherManifest) {
     }
     if (anotherManifest) {
         for (const key of Object.keys(links)) {
-            links[key] = "deleted";
+            links[key] = "new";
         }
         for (const [parent, children] of Object.entries(anotherManifest.child_map)) {
             for (const child of children) {
                 const key = `${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`;
-                links[key] = key in links ? "identical" : "new";
+                links[key] = key in links ? "identical" : "deleted";
             }
         }
     }
     const statements = [];
     let idx = 0;
     for (const [key, value] of Object.entries(links)) {
-        idx++;
         const [parent, child, ..._] = key.split("|");
         switch (value) {
             case "deleted":
@@ -24935,6 +24933,7 @@ function links(mainManifest, anotherManifest) {
                 statements.push(`linkStyle ${idx} stroke-width:2px`);
                 break;
         }
+        idx++;
     }
     return statements;
 }

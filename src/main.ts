@@ -67,7 +67,7 @@ function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
   }
   if (anotherManifest) {
     for (const key of Object.keys(resources)) {
-      resources[key] = "deleted";
+      resources[key] = "new";
     }
     for (const [key, value] of Object.entries({
       ...anotherManifest.sources,
@@ -83,7 +83,7 @@ function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
           resources[key] = "identical";
         }
       } else {
-        resources[key] = "new";
+        resources[key] = "deleted";
       }
     }
   }
@@ -92,7 +92,7 @@ function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
   for (const [key, value] of Object.entries(resources)) {
     const splited = key.split(".");
     let text = splited.slice(2).join(".");
-    const style: string[] = ["color:white"];
+    const style: string[] = ["color:white", "stroke:black"];
     switch (splited[0]) {
       case "source":
         style.push("fill:green");
@@ -114,7 +114,6 @@ function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
         break;
       case "modified":
         style.push("stroke-width:4px");
-        text = `**${text}**`;
         break;
       case "new":
         style.push("stroke-width:4px");
@@ -142,21 +141,20 @@ function links(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
   }
   if (anotherManifest) {
     for (const key of Object.keys(links)) {
-      links[key] = "deleted";
+      links[key] = "new";
     }
     for (const [parent, children] of Object.entries(
       anotherManifest.child_map,
     )) {
       for (const child of children) {
         const key = `${b2a(parent)}|${b2a(child)}`;
-        links[key] = key in links ? "identical" : "new";
+        links[key] = key in links ? "identical" : "deleted";
       }
     }
   }
   const statements: string[] = [];
   let idx = 0;
   for (const [key, value] of Object.entries(links)) {
-    idx++;
     const [parent, child, ..._] = key.split("|");
     switch (value) {
       case "deleted":
@@ -170,6 +168,7 @@ function links(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
         statements.push(`linkStyle ${idx} stroke-width:2px`);
         break;
     }
+    idx++;
   }
   return statements;
 }
