@@ -21,7 +21,7 @@ describe("flowchart", () => {
         "source.project.a.a": {},
       },
       nodes: {
-        "model.project.b": { check_sum: { check_sum: "anyvalue" } },
+        "model.project.b": { checksum: { checksum: "anyvalue" } },
       },
       exposures: {
         "exposure.project.c": {},
@@ -51,7 +51,7 @@ describe("flowchart", () => {
         "source.project.a.a": {},
       },
       nodes: {
-        "model.project.b": { check_sum: { check_sum: "original hash" } },
+        "model.project.b": { checksum: { checksum: "original hash" } },
       },
       exposures: {
         "exposure.project.c": {},
@@ -66,7 +66,7 @@ describe("flowchart", () => {
         "source.project.a.a": {},
       },
       nodes: {
-        "model.project.b": { check_sum: { check_sum: "modified hash" } },
+        "model.project.b": { checksum: { checksum: "modified hash" } },
       },
       exposures: {
         "exposure.project.d": {},
@@ -88,7 +88,7 @@ describe("flowchart", () => {
   style ZXhwb3N1cmUucHJvamVjdC5j color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
   c291cmNlLnByb2plY3QuYS5h --> bW9kZWwucHJvamVjdC5i;
   bW9kZWwucHJvamVjdC5i --> ZXhwb3N1cmUucHJvamVjdC5k;
-  linkStyle 1 stroke-width:2px;
+  linkStyle 1 stroke-width:4px;
   bW9kZWwucHJvamVjdC5i -.-> ZXhwb3N1cmUucHJvamVjdC5j;
 `;
     expect(actual).toBe(expected);

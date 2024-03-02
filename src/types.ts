@@ -1,7 +1,7 @@
 export type Source = {};
 
 export type Node = {
-  check_sum: { check_sum: string };
+  checksum: { checksum: string };
 };
 
 export type Exposure = {};
@@ -17,5 +17,5 @@ export type Resource = Source | Node | Exposure;
 export type Status = "identical" | "modified" | "new" | "deleted";
 
 export function isNode(resource: Resource): resource is Node {
-  return "check_sum" in resource;
+  return "checksum" in resource;
 }
