@@ -156,7 +156,6 @@ function links(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
   const statements: string[] = [];
   let idx = 0;
   for (const [key, value] of Object.entries(links)) {
-    idx++;
     const [parent, child, ..._] = key.split("|");
     switch (value) {
       case "deleted":
@@ -170,6 +169,7 @@ function links(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
         statements.push(`linkStyle ${idx} stroke-width:2px`);
         break;
     }
+    idx++;
   }
   return statements;
 }
