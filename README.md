@@ -1,4 +1,5 @@
 # DBT Mermaid
 
 ```mermaid
+
 ```
