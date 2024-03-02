@@ -1,1 +1,4 @@
 # DBT Mermaid
+
+```mermaid
+```
