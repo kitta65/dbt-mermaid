@@ -5,6 +5,5 @@ sources:
     database: postgres
     tables:
       - name: events
-      - name: users
       - name: orders
       - name: products

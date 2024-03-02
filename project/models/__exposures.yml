@@ -6,6 +6,13 @@ exposures:
       email: dbt.mermaid@example.com
     depends_on:
       - ref("users")
+      - ref("sessions")
+  - name: user analysis2
+    type: analysis
+    owner:
+      email: dbt.mermaid@example.com
+    depends_on:
+      - ref("users")
   - name: session analysis
     type: analysis
     owner:
