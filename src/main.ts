@@ -76,8 +76,8 @@ function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
     })) {
       if (key in resources) {
         if (isNode(value)) {
-          const mainHash = mainManifest.nodes[key].check_sum.check_sum;
-          const anotherHash = value.check_sum.check_sum;
+          const mainHash = mainManifest.nodes[key].checksum.checksum;
+          const anotherHash = value.checksum.checksum;
           resources[key] = mainHash === anotherHash ? "identical" : "modified";
         } else {
           resources[key] = "identical";

@@ -21,7 +21,7 @@ describe("flowchart", () => {
         "source.project.a.a": {},
       },
       nodes: {
-        "model.project.b": { check_sum: { check_sum: "anyvalue" } },
+        "model.project.b": { checksum: { checksum: "anyvalue" } },
       },
       exposures: {
         "exposure.project.c": {},
@@ -51,7 +51,7 @@ describe("flowchart", () => {
         "source.project.a.a": {},
       },
       nodes: {
-        "model.project.b": { check_sum: { check_sum: "original hash" } },
+        "model.project.b": { checksum: { checksum: "original hash" } },
       },
       exposures: {
         "exposure.project.c": {},
@@ -66,7 +66,7 @@ describe("flowchart", () => {
         "source.project.a.a": {},
       },
       nodes: {
-        "model.project.b": { check_sum: { check_sum: "modified hash" } },
+        "model.project.b": { checksum: { checksum: "modified hash" } },
       },
       exposures: {
         "exposure.project.d": {},

@@ -24844,8 +24844,8 @@ function nodes(mainManifest, anotherManifest) {
         })) {
             if (key in resources) {
                 if ((0, types_1.isNode)(value)) {
-                    const mainHash = mainManifest.nodes[key].check_sum.check_sum;
-                    const anotherHash = value.check_sum.check_sum;
+                    const mainHash = mainManifest.nodes[key].checksum.checksum;
+                    const anotherHash = value.checksum.checksum;
                     resources[key] = mainHash === anotherHash ? "identical" : "modified";
                 }
                 else {
@@ -24949,7 +24949,7 @@ function links(mainManifest, anotherManifest) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.isNode = void 0;
 function isNode(resource) {
-    return "check_sum" in resource;
+    return "checksum" in resource;
 }
 exports.isNode = isNode;
 
