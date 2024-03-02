@@ -24866,6 +24866,9 @@ function nodes(mainManifest, anotherManifest) {
             case "source":
                 style.push("fill:green");
                 break;
+            case "seed":
+                style.push("fill:blue");
+                break;
             case "model":
                 style.push("fill:blue");
                 break;

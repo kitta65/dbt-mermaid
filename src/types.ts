@@ -1,5 +1,6 @@
 export type Source = {};
 
+// seed or model
 export type Node = {
   checksum: { checksum: string };
 };
