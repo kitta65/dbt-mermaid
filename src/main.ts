@@ -92,7 +92,7 @@ function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
   for (const [key, value] of Object.entries(resources)) {
     const splited = key.split(".");
     let text = splited.slice(2).join(".");
-    const style: string[] = ["color:white"];
+    const style: string[] = ["color:white", "stroke:black"];
     switch (splited[0]) {
       case "source":
         style.push("fill:green");
@@ -114,7 +114,6 @@ function nodes(mainManifest: Manifest, anotherManifest?: Manifest): string[] {
         break;
       case "modified":
         style.push("stroke-width:4px");
-        text = `**${text}**`;
         break;
       case "new":
         style.push("stroke-width:4px");

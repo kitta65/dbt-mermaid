@@ -34,11 +34,11 @@ describe("flowchart", () => {
     const actual = flowchart(manifest);
     const expected = `flowchart LR
   c291cmNlLnByb2plY3QuYS5h("a.a");
-  style c291cmNlLnByb2plY3QuYS5h color:white,fill:green,stroke-width:0px;
+  style c291cmNlLnByb2plY3QuYS5h color:white,stroke:black,fill:green,stroke-width:0px;
   bW9kZWwucHJvamVjdC5i("b");
-  style bW9kZWwucHJvamVjdC5i color:white,fill:blue,stroke-width:0px;
+  style bW9kZWwucHJvamVjdC5i color:white,stroke:black,fill:blue,stroke-width:0px;
   ZXhwb3N1cmUucHJvamVjdC5j("c");
-  style ZXhwb3N1cmUucHJvamVjdC5j color:white,fill:orange,stroke-width:0px;
+  style ZXhwb3N1cmUucHJvamVjdC5j color:white,stroke:black,fill:orange,stroke-width:0px;
   c291cmNlLnByb2plY3QuYS5h --> bW9kZWwucHJvamVjdC5i;
   bW9kZWwucHJvamVjdC5i --> ZXhwb3N1cmUucHJvamVjdC5j;
 `;
