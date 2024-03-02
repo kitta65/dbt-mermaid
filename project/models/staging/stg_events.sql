@@ -1,1 +1,1 @@
-select id as event_id, * except (id), from {{ source("source", "events") }}
+select id as event_id, *, from {{ source("source", "events") }}
