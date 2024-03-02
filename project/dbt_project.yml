@@ -5,6 +5,7 @@ config-version: 2
 profile: "dbt_mermaid"
 
 model-paths: ["models"]
+seed-paths: ["seeds"]
 clean-targets:
   - "target"
   - "dbt_packages"
