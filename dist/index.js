@@ -24780,6 +24780,7 @@ const fs = __importStar(__nccwpck_require__(3292));
 const core = __importStar(__nccwpck_require__(2186));
 const process = __importStar(__nccwpck_require__(7282));
 const utils_1 = __nccwpck_require__(1314);
+const types_1 = __nccwpck_require__(5077);
 async function main() {
     const dbtVersion = core.getInput("dbt-version");
     const mainProject = core.getInput("dbt-project");
@@ -24814,36 +24815,144 @@ function readManifest(filepath) {
         .then((buffer) => String(buffer))
         .then((json) => JSON.parse(json));
 }
-function flowchart(manifest) {
-    const resources = {
-        ...manifest.sources,
-        ...manifest.nodes,
-        ...manifest.exposures,
-    };
-    const statements = [];
-    statements.push("classDef source fill:green,stroke-width:0px,color:white");
-    statements.push("classDef model fill:blue,stroke-width:0px,color:white");
-    statements.push("classDef exposure fill:orange,stroke-width:0px,color:white");
-    for (const name of Object.keys(resources)) {
-        const splited = name.split(".");
-        const class_ = splited[0];
-        const text = splited.slice(1).join(".");
-        // NOTE
-        // name may contain special character (e.g. white space)
-        // which is not allowed in flowchart id
-        const id = (0, utils_1.b2a)(name);
-        statements.push(`${id}("${text}")`);
-        statements.push(`class ${id} ${class_}`);
-    }
-    for (const [parent, children] of Object.entries(manifest.child_map)) {
-        for (const child of children) {
-            statements.push(`${(0, utils_1.b2a)(parent)} --> ${(0, utils_1.b2a)(child)}`);
-        }
-    }
+function flowchart(mainManifest, anotherManifest = null) {
+    const statements = [
+        ...nodes(mainManifest, anotherManifest),
+        ...links(mainManifest, anotherManifest),
+    ];
     const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
     return mermaid;
 }
 exports.flowchart = flowchart;
+function nodes(mainManifest, anotherManifest = null) {
+    let resources = {};
+    for (const key of Object.keys({
+        ...mainManifest.sources,
+        ...mainManifest.nodes,
+        ...mainManifest.exposures,
+    })) {
+        resources[key] = "identical";
+    }
+    if (anotherManifest) {
+        for (const key of Object.keys(resources)) {
+            resources[key] = "deleted";
+        }
+        for (const [key, value] of Object.entries({
+            ...anotherManifest.sources,
+            ...anotherManifest.nodes,
+            ...anotherManifest.exposures,
+        })) {
+            if (key in resources) {
+                if ((0, types_1.isNode)(value)) {
+                    const mainHash = mainManifest.nodes[key].check_sum.check_sum;
+                    const anotherHash = value.check_sum.check_sum;
+                    resources[key] = mainHash === anotherHash ? "identical" : "modified";
+                }
+                else {
+                    resources[key] = "identical";
+                }
+            }
+            else {
+                resources[key] = "new";
+            }
+        }
+    }
+    const statements = [];
+    for (const [key, value] of Object.entries(resources)) {
+        const splited = key.split(".");
+        let text = splited.slice(1).join(".");
+        const style = ["color:white"];
+        switch (splited[0]) {
+            case "source":
+                style.push("fill:green");
+                break;
+            case "model":
+                style.push("fill:blue");
+                break;
+            case "exposure":
+                style.push("fill:orange");
+                break;
+        }
+        switch (value) {
+            case "deleted":
+                style.push("stroke-width:4px");
+                style.push("stroke-dasharray: 5 5");
+                break;
+            case "identical":
+                style.push("stroke-width:0px");
+                break;
+            case "modified":
+                style.push("stroke-width:4px");
+                text = `**${text}**`;
+                break;
+            case "new":
+                style.push("stroke-width:4px");
+                break;
+        }
+        // NOTE
+        // name may contain special character (e.g. white space)
+        // which is not allowed in flowchart id
+        const id = (0, utils_1.b2a)(key);
+        statements.push(`${id}("${text}")`);
+        statements.push(`style ${id} ${style.join(",")}`);
+    }
+    return statements;
+}
+function links(mainManifest, anotherManifest = null) {
+    let links = {};
+    for (const [parent, children] of Object.entries(mainManifest.child_map)) {
+        for (const child of children) {
+            // since base64 does not use `|`
+            // it is a good separator
+            links[`${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`] = "identical";
+        }
+    }
+    if (anotherManifest) {
+        for (const key of Object.keys(links)) {
+            links[key] = "deleted";
+        }
+        for (const [parent, children] of Object.entries(anotherManifest.child_map)) {
+            for (const child of children) {
+                const key = `${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`;
+                links[key] = key in links ? "identical" : "new";
+            }
+        }
+    }
+    const statements = [];
+    let idx = 0;
+    for (const [key, value] of Object.entries(links)) {
+        idx++;
+        const [parent, child, ..._] = key.split("|");
+        switch (value) {
+            case "deleted":
+                statements.push(`${parent} -.-> ${child}`);
+                break;
+            case "identical":
+                statements.push(`${parent} --> ${child}`);
+                break;
+            case "new":
+                statements.push(`${parent} --> ${child}`);
+                statements.push(`linkStyle ${idx} stroke-width:2px`);
+                break;
+        }
+    }
+    return statements;
+}
+
+
+/***/ }),
+
+/***/ 5077:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isNode = void 0;
+function isNode(resource) {
+    return "check_sum" in resource;
+}
+exports.isNode = isNode;
 
 
 /***/ }),

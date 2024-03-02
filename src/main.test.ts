@@ -1,4 +1,5 @@
-import { Manifest, flowchart } from "./main";
+import { flowchart } from "./main";
+import { Manifest } from "./types";
 
 describe("flowchart", () => {
   test("draw empty flowchart", () => {
@@ -10,35 +11,31 @@ describe("flowchart", () => {
     };
     const actual = flowchart(manifest);
     const expected = `flowchart LR
-  classDef source fill:green,stroke-width:0px,color:white;
-  classDef model fill:blue,stroke-width:0px,color:white;
-  classDef exposure fill:orange,stroke-width:0px,color:white;
 `;
     expect(actual).toBe(expected);
   });
 
   test("draw simple flowchart", () => {
     const manifest: Manifest = {
-      sources: {},
-      nodes: {
+      sources: {
         "source.a.a": "anyvalue",
-        "model.b": "anyvalue",
+      },
+      nodes: {
+        "model.b": { check_sum: { check_sum: "anyvalue" } },
+      },
+      exposures: {
         "exposure.c": "anyvalue",
       },
-      exposures: {},
       child_map: { "source.a.a": ["model.b"], "model.b": ["exposure.c"] },
     };
     const actual = flowchart(manifest);
     const expected = `flowchart LR
-  classDef source fill:green,stroke-width:0px,color:white;
-  classDef model fill:blue,stroke-width:0px,color:white;
-  classDef exposure fill:orange,stroke-width:0px,color:white;
   c291cmNlLmEuYQ("a.a");
-  class c291cmNlLmEuYQ source;
+  style c291cmNlLmEuYQ color:white,fill:green,stroke-width:0px;
   bW9kZWwuYg("b");
-  class bW9kZWwuYg model;
+  style bW9kZWwuYg color:white,fill:blue,stroke-width:0px;
   ZXhwb3N1cmUuYw("c");
-  class ZXhwb3N1cmUuYw exposure;
+  style ZXhwb3N1cmUuYw color:white,fill:orange,stroke-width:0px;
   c291cmNlLmEuYQ --> bW9kZWwuYg;
   bW9kZWwuYg --> ZXhwb3N1cmUuYw;
 `;
