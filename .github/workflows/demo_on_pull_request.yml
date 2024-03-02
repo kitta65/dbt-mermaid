@@ -1,0 +1,29 @@
+on:
+  pull_request:
+    paths: "project/models/**"
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.base_ref }}"
+          path: base
+      - id: dbt-mermaid
+        uses: ./
+        with:
+          dbt-version: 1.7
+          dbt-project: project
+          dbt-project-to-compare-with: base/project
+      - name: format comment message
+        run: |
+          comment_file=/tmp/comment.md
+          echo '```mermaid' >> $comment_file
+          cat ${{ steps.dbt-mermaid.outputs.filepath }} >> $comment_file
+          echo '```' >> $comment_file
+      - name: comment on pull request
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          comment_tag: from-actions-comment-pull-request
+          filePath: /tmp/comment.md

@@ -24778,59 +24778,180 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.flowchart = exports.main = void 0;
 const fs = __importStar(__nccwpck_require__(3292));
 const core = __importStar(__nccwpck_require__(2186));
-// import * as github from "@actions/github";
 const process = __importStar(__nccwpck_require__(7282));
 const utils_1 = __nccwpck_require__(1314);
+const types_1 = __nccwpck_require__(5077);
 async function main() {
-    const dbtDirectory = core.getInput("dbt-directory");
-    process.chdir(dbtDirectory);
-    // create manifest.json
+    const workingDirectory = process.cwd();
+    const dbtVersion = core.getInput("dbt-version");
+    const mainProject = core.getInput("dbt-project");
+    process.chdir(mainProject);
+    await writeManifest(dbtVersion);
+    const mainManifest = await readManifest("./target/manifest.json");
+    process.chdir(workingDirectory);
+    let anotherManifest;
+    const anotherProject = core.getInput("dbt-project-to-compare-with");
+    if (anotherProject) {
+        process.chdir(anotherProject);
+        await writeManifest(dbtVersion);
+        anotherManifest = await readManifest("./target/manifest.json");
+        process.chdir(workingDirectory);
+    }
+    const chart = flowchart(mainManifest, anotherManifest);
+    const outpath = `${process.cwd()}/lineage.mermaid`;
+    await fs.writeFile(outpath, chart);
+    core.setOutput("filepath", outpath);
+}
+exports.main = main;
+async function writeManifest(dbtVer) {
     const dbtVersion = core.getInput("dbt-version");
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt deps`);
     // TODO support other adapters
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
-    const manifest = await fs
-        .readFile("./target/manifest.json")
+}
+function readManifest(filepath) {
+    return fs
+        .readFile(filepath)
         .then((buffer) => String(buffer))
         .then((json) => JSON.parse(json));
-    const mermaid = flowchart(manifest);
-    const outpath = `${process.cwd()}/lineage.mermaid`;
-    await fs.writeFile(outpath, mermaid);
-    core.setOutput("filepath", outpath);
 }
-exports.main = main;
-function flowchart(manifest) {
-    const resources = {
-        ...manifest.sources,
-        ...manifest.nodes,
-        ...manifest.exposures,
-    };
-    const name2id = {};
-    let id = 0;
-    for (const name of Object.keys(resources)) {
-        id++;
-        name2id[name] = id;
-    }
-    const statements = [];
-    statements.push("classDef source fill:green,stroke-width:0px,color:white");
-    statements.push("classDef model fill:blue,stroke-width:0px,color:white");
-    statements.push("classDef exposure fill:orange,stroke-width:0px,color:white");
-    for (const [name, id] of Object.entries(name2id)) {
-        const splited = name.split(".");
-        const type = splited[0];
-        const shortend = splited.slice(1).join(".");
-        statements.push(`${id}("${shortend}")`);
-        statements.push(`class ${id} ${type}`);
-    }
-    for (const [parent, children] of Object.entries(manifest.child_map)) {
-        for (const child of children) {
-            statements.push(`${name2id[parent]} --> ${name2id[child]}`);
-        }
-    }
+function flowchart(mainManifest, anotherManifest) {
+    const statements = [
+        ...nodes(mainManifest, anotherManifest),
+        ...links(mainManifest, anotherManifest),
+    ];
     const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
     return mermaid;
 }
 exports.flowchart = flowchart;
+function nodes(mainManifest, anotherManifest) {
+    let resources = {};
+    for (const key of Object.keys({
+        ...mainManifest.sources,
+        ...mainManifest.nodes,
+        ...mainManifest.exposures,
+    })) {
+        resources[key] = "identical";
+    }
+    if (anotherManifest) {
+        for (const key of Object.keys(resources)) {
+            resources[key] = "new";
+        }
+        for (const [key, value] of Object.entries({
+            ...anotherManifest.sources,
+            ...anotherManifest.nodes,
+            ...anotherManifest.exposures,
+        })) {
+            if (key in resources) {
+                if ((0, types_1.isNode)(value)) {
+                    const mainHash = mainManifest.nodes[key].checksum.checksum;
+                    const anotherHash = value.checksum.checksum;
+                    resources[key] = mainHash === anotherHash ? "identical" : "modified";
+                }
+                else {
+                    resources[key] = "identical";
+                }
+            }
+            else {
+                resources[key] = "deleted";
+            }
+        }
+    }
+    const statements = [];
+    for (const [key, value] of Object.entries(resources)) {
+        const splited = key.split(".");
+        let text = splited.slice(2).join(".");
+        const style = ["color:white", "stroke:black"];
+        switch (splited[0]) {
+            case "source":
+                style.push("fill:green");
+                break;
+            case "model":
+                style.push("fill:blue");
+                break;
+            case "exposure":
+                style.push("fill:orange");
+                break;
+        }
+        switch (value) {
+            case "deleted":
+                style.push("stroke-width:4px");
+                style.push("stroke-dasharray: 5 5");
+                break;
+            case "identical":
+                style.push("stroke-width:0px");
+                break;
+            case "modified":
+                style.push("stroke-width:4px");
+                break;
+            case "new":
+                style.push("stroke-width:4px");
+                break;
+        }
+        // NOTE
+        // name may contain special character (e.g. white space)
+        // which is not allowed in flowchart id
+        const id = (0, utils_1.b2a)(key);
+        statements.push(`${id}("${text}")`);
+        statements.push(`style ${id} ${style.join(",")}`);
+    }
+    return statements;
+}
+function links(mainManifest, anotherManifest) {
+    let links = {};
+    for (const [parent, children] of Object.entries(mainManifest.child_map)) {
+        for (const child of children) {
+            // since base64 does not use `|`
+            // it is a good separator
+            links[`${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`] = "identical";
+        }
+    }
+    if (anotherManifest) {
+        for (const key of Object.keys(links)) {
+            links[key] = "new";
+        }
+        for (const [parent, children] of Object.entries(anotherManifest.child_map)) {
+            for (const child of children) {
+                const key = `${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`;
+                links[key] = key in links ? "identical" : "deleted";
+            }
+        }
+    }
+    const statements = [];
+    let idx = 0;
+    for (const [key, value] of Object.entries(links)) {
+        const [parent, child, ..._] = key.split("|");
+        switch (value) {
+            case "deleted":
+                statements.push(`${parent} -.-> ${child}`);
+                break;
+            case "identical":
+                statements.push(`${parent} --> ${child}`);
+                break;
+            case "new":
+                statements.push(`${parent} --> ${child}`);
+                statements.push(`linkStyle ${idx} stroke-width:4px`);
+                break;
+        }
+        idx++;
+    }
+    return statements;
+}
+
+
+/***/ }),
+
+/***/ 5077:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isNode = void 0;
+function isNode(resource) {
+    return "checksum" in resource;
+}
+exports.isNode = isNode;
 
 
 /***/ }),
@@ -24867,10 +24988,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.exec = void 0;
+exports.a2b = exports.b2a = exports.exec = void 0;
 const node_util_1 = __importDefault(__nccwpck_require__(7261));
 const child_process = __importStar(__nccwpck_require__(2081));
 exports.exec = node_util_1.default.promisify(child_process.exec);
+function b2a(str) {
+    const b64 = btoa(encodeURIComponent(str))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=/g, "");
+    return b64;
+}
+exports.b2a = b2a;
+function a2b(b64) {
+    // it seems that padding (=) is not needed
+    const str = b64.replace(/-/g, "+").replace(/_/g, "\\");
+    return decodeURIComponent(str);
+}
+exports.a2b = a2b;
 
 
 /***/ }),
