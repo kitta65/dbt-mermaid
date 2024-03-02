@@ -1,27 +1,26 @@
 import * as fs from "fs/promises";
 import * as core from "@actions/core";
 import * as process from "process";
-import { b2a, exec } from "./utils";
+import { b2a, exec, moveTo } from "./utils";
 import { Manifest, Status, isNode } from "./types";
 
 export async function main() {
-  const workingDirectory = process.cwd();
   const dbtVersion = core.getInput("dbt-version");
 
-  const mainProject = core.getInput("dbt-project");
-  process.chdir(mainProject);
+  const moveBack = moveTo(core.getInput("dbt-project"));
   await writeManifest(dbtVersion);
   const mainManifest = await readManifest("./target/manifest.json");
-  process.chdir(workingDirectory);
+  moveBack();
 
   let anotherManifest;
   const anotherProject = core.getInput("dbt-project-to-compare-with");
   if (anotherProject) {
-    process.chdir(anotherProject);
+    const moveBack = moveTo(anotherProject);
     await writeManifest(dbtVersion);
     anotherManifest = await readManifest("./target/manifest.json");
-    process.chdir(workingDirectory);
+    moveBack();
   }
+
   const chart = flowchart(mainManifest, anotherManifest);
   const outpath = `${process.cwd()}/lineage.mermaid`;
   await fs.writeFile(outpath, chart);

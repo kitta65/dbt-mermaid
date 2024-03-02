@@ -24782,20 +24782,18 @@ const process = __importStar(__nccwpck_require__(7282));
 const utils_1 = __nccwpck_require__(1314);
 const types_1 = __nccwpck_require__(5077);
 async function main() {
-    const workingDirectory = process.cwd();
     const dbtVersion = core.getInput("dbt-version");
-    const mainProject = core.getInput("dbt-project");
-    process.chdir(mainProject);
+    const moveBack = (0, utils_1.moveTo)(core.getInput("dbt-project"));
     await writeManifest(dbtVersion);
     const mainManifest = await readManifest("./target/manifest.json");
-    process.chdir(workingDirectory);
+    moveBack();
     let anotherManifest;
     const anotherProject = core.getInput("dbt-project-to-compare-with");
     if (anotherProject) {
-        process.chdir(anotherProject);
+        const moveBack = (0, utils_1.moveTo)(anotherProject);
         await writeManifest(dbtVersion);
         anotherManifest = await readManifest("./target/manifest.json");
-        process.chdir(workingDirectory);
+        moveBack();
     }
     const chart = flowchart(mainManifest, anotherManifest);
     const outpath = `${process.cwd()}/lineage.mermaid`;
@@ -24991,9 +24989,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.a2b = exports.b2a = exports.exec = void 0;
+exports.moveTo = exports.a2b = exports.b2a = exports.exec = void 0;
 const node_util_1 = __importDefault(__nccwpck_require__(7261));
 const child_process = __importStar(__nccwpck_require__(2081));
+const process = __importStar(__nccwpck_require__(7282));
 exports.exec = node_util_1.default.promisify(child_process.exec);
 function b2a(str) {
     const b64 = btoa(encodeURIComponent(str))
@@ -25009,6 +25008,12 @@ function a2b(b64) {
     return decodeURIComponent(str);
 }
 exports.a2b = a2b;
+function moveTo(path) {
+    const curr = process.cwd();
+    process.chdir(path);
+    return () => process.chdir(curr);
+}
+exports.moveTo = moveTo;
 
 
 /***/ }),
