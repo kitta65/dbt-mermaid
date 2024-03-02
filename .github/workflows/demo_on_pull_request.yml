@@ -1,0 +1,21 @@
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: main
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.base_ref }}"
+          path: another
+      - id: dbt-mermaid
+        uses: ./
+        with:
+          dbt-version: 1.7
+          dbt-project: main/project
+          dbt-project-to-compare-with: another/project
+      - run: cat ${{ steps.dbt-mermaid.outputs.filepath }}

@@ -39,9 +39,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - id: test-action
+      - id: dbt-mermaid
         uses: ./
         with:
           dbt-version: 1.7
           dbt-project: project
-      - run: cat ${{ steps.test-action.outputs.filepath }}
+      - run: cat ${{ steps.dbt-mermaid.outputs.filepath }}
