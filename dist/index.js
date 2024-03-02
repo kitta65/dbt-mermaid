@@ -24817,14 +24817,14 @@ function readManifest(filepath) {
 }
 function flowchart(mainManifest, anotherManifest) {
     const statements = [
-        ...nodes(mainManifest, anotherManifest),
-        ...links(mainManifest, anotherManifest),
+        ...vertices(mainManifest, anotherManifest),
+        ...edges(mainManifest, anotherManifest),
     ];
     const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
     return mermaid;
 }
 exports.flowchart = flowchart;
-function nodes(mainManifest, anotherManifest) {
+function vertices(mainManifest, anotherManifest) {
     let resources = {};
     for (const key of Object.keys({
         ...mainManifest.sources,
@@ -24900,29 +24900,29 @@ function nodes(mainManifest, anotherManifest) {
     }
     return statements;
 }
-function links(mainManifest, anotherManifest) {
-    let links = {};
+function edges(mainManifest, anotherManifest) {
+    let mappings = {};
     for (const [parent, children] of Object.entries(mainManifest.child_map)) {
         for (const child of children) {
             // since base64 does not use `|`
             // it is a good separator
-            links[`${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`] = "identical";
+            mappings[`${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`] = "identical";
         }
     }
     if (anotherManifest) {
-        for (const key of Object.keys(links)) {
-            links[key] = "new";
+        for (const key of Object.keys(mappings)) {
+            mappings[key] = "new";
         }
         for (const [parent, children] of Object.entries(anotherManifest.child_map)) {
             for (const child of children) {
                 const key = `${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`;
-                links[key] = key in links ? "identical" : "deleted";
+                mappings[key] = key in mappings ? "identical" : "deleted";
             }
         }
     }
     const statements = [];
     let idx = 0;
-    for (const [key, value] of Object.entries(links)) {
+    for (const [key, value] of Object.entries(mappings)) {
         const [parent, child, ..._] = key.split("|");
         switch (value) {
             case "deleted":
