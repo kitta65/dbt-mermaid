@@ -1,0 +1,16 @@
+on:
+  pull_request:
+    paths: "project/models/**"
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: dbt-mermaid
+        uses: ./
+        with:
+          dbt-version: 1.7
+          dbt-project: project
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lineage.mermaid
+          path: ${{ steps.dbt-mermaid.outputs.filepath }}
