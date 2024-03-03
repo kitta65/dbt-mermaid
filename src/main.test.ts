@@ -1,4 +1,5 @@
 import { Manifest } from "./manifest";
+import { b2a } from "./utils";
 
 describe("flowchart", () => {
   test("draw empty flowchart", () => {
@@ -16,83 +17,90 @@ describe("flowchart", () => {
   });
 
   test("draw simple flowchart", () => {
+    const a = "source.project.a.a";
+    const b = "model.project.b";
+    const c = "exposure.project.c";
     const manifest = new Manifest({
       sources: {
-        "source.project.a.a": {},
+        [a]: {},
       },
       nodes: {
-        "model.project.b": { checksum: { checksum: "anyvalue" } },
+        [b]: { checksum: { checksum: "anyvalue" } },
       },
       exposures: {
-        "exposure.project.c": {},
+        [c]: {},
       },
       child_map: {
-        "source.project.a.a": ["model.project.b"],
-        "model.project.b": ["exposure.project.c"],
+        [a]: [b],
+        [b]: [c],
       },
       parent_map: {}, // not needed when drawing entire lineage
     });
     const actual = manifest.flowchart(true);
     const expected = `flowchart LR
-  c291cmNlLnByb2plY3QuYS5h("a.a");
-  style c291cmNlLnByb2plY3QuYS5h color:white,stroke:black,fill:green,stroke-width:0px;
-  bW9kZWwucHJvamVjdC5i("b");
-  style bW9kZWwucHJvamVjdC5i color:white,stroke:black,fill:blue,stroke-width:0px;
-  ZXhwb3N1cmUucHJvamVjdC5j("c");
-  style ZXhwb3N1cmUucHJvamVjdC5j color:white,stroke:black,fill:orange,stroke-width:0px;
-  c291cmNlLnByb2plY3QuYS5h --> bW9kZWwucHJvamVjdC5i;
-  bW9kZWwucHJvamVjdC5i --> ZXhwb3N1cmUucHJvamVjdC5j;
+  ${b2a(a)}("a.a");
+  style ${b2a(a)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${b2a(b)}("b");
+  style ${b2a(b)} color:white,stroke:black,fill:blue,stroke-width:0px;
+  ${b2a(c)}("c");
+  style ${b2a(c)} color:white,stroke:black,fill:orange,stroke-width:0px;
+  ${b2a(a)} --> ${b2a(b)};
+  ${b2a(b)} --> ${b2a(c)};
 `;
     expect(actual).toBe(expected);
   });
 
   test("draw entire flowchart with another manifest", () => {
+    const a = "source.project.a.a";
+    const b = "model.project.b";
+    const c = "exposure.project.c";
+    const d = "exposure.project.d";
     const originalManifest = new Manifest({
       sources: {
-        "source.project.a.a": {},
+        [a]: {},
       },
       nodes: {
-        "model.project.b": { checksum: { checksum: "original hash" } },
+        [b]: { checksum: { checksum: "original hash" } },
       },
       exposures: {
-        "exposure.project.c": {},
+        [c]: {},
       },
       child_map: {
-        "source.project.a.a": ["model.project.b"],
-        "model.project.b": ["exposure.project.c"],
+        [a]: [b],
+        [b]: [c],
       },
       parent_map: {}, // not needed when drawing entire lineage
     });
     const modifiedManifest = new Manifest({
       sources: {
-        "source.project.a.a": {},
+        [a]: {},
       },
       nodes: {
-        "model.project.b": { checksum: { checksum: "modified hash" } },
+        [b]: { checksum: { checksum: "modified hash" } },
       },
       exposures: {
-        "exposure.project.d": {},
+        [d]: {},
       },
       child_map: {
-        "source.project.a.a": ["model.project.b"],
-        "model.project.b": ["exposure.project.d"],
+        [a]: [b],
+        [b]: [d],
       },
       parent_map: {}, // not needed when drawing entire lineage
     });
     const actual = modifiedManifest.flowchart(true, originalManifest);
     const expected = `flowchart LR
-  c291cmNlLnByb2plY3QuYS5h("a.a");
-  style c291cmNlLnByb2plY3QuYS5h color:white,stroke:black,fill:green,stroke-width:0px;
-  bW9kZWwucHJvamVjdC5i("b");
-  style bW9kZWwucHJvamVjdC5i color:white,stroke:black,fill:blue,stroke-width:4px;
-  ZXhwb3N1cmUucHJvamVjdC5k("d");
-  style ZXhwb3N1cmUucHJvamVjdC5k color:white,stroke:black,fill:orange,stroke-width:4px;
-  ZXhwb3N1cmUucHJvamVjdC5j("c");
-  style ZXhwb3N1cmUucHJvamVjdC5j color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
-  c291cmNlLnByb2plY3QuYS5h --> bW9kZWwucHJvamVjdC5i;
-  bW9kZWwucHJvamVjdC5i --> ZXhwb3N1cmUucHJvamVjdC5k;
+  ${b2a(a)}("a.a");
+  style ${b2a(a)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${b2a(b)}("b");
+  style ${b2a(b)} color:white,stroke:black,fill:blue,stroke-width:4px;
+  ${b2a(d)}("d");
+  style ${b2a(d)} color:white,stroke:black,fill:orange,stroke-width:4px;
+  ${b2a(c)}("c");
+  style ${b2a(c)} color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
+  ${b2a(a)} --> ${b2a(b)};
+  ${b2a(b)} --> ${b2a(d)};
   linkStyle 1 stroke-width:4px;
-  bW9kZWwucHJvamVjdC5i -.-> ZXhwb3N1cmUucHJvamVjdC5j;
+  ${b2a(b)} -.-> ${b2a(c)};
 `;
     expect(actual).toBe(expected);
   });
@@ -153,20 +161,20 @@ describe("flowchart", () => {
 
     const actual = modifiedManifest.flowchart(false, originalManifest);
     const expected = `flowchart LR
-  c291cmNlLnAuYTE("a1");
-  style c291cmNlLnAuYTE color:white,stroke:black,fill:green,stroke-width:0px;
-  c291cmNlLnAuYjE("b1");
-  style c291cmNlLnAuYjE color:white,stroke:black,fill:green,stroke-width:0px;
-  bW9kZWwucC5jMQ("c1");
-  style bW9kZWwucC5jMQ color:white,stroke:black,fill:blue,stroke-width:4px;
-  bW9kZWwucC5kMQ("d1");
-  style bW9kZWwucC5kMQ color:white,stroke:black,fill:blue,stroke-width:0px;
-  ZXhwb3N1cmUucC5lMQ("e1");
-  style ZXhwb3N1cmUucC5lMQ color:white,stroke:black,fill:orange,stroke-width:0px;
-  c291cmNlLnAuYTE --> c291cmNlLnAuYjE;
-  c291cmNlLnAuYjE --> bW9kZWwucC5jMQ;
-  bW9kZWwucC5jMQ --> bW9kZWwucC5kMQ;
-  bW9kZWwucC5kMQ --> ZXhwb3N1cmUucC5lMQ;
+  ${b2a(a1)}("a1");
+  style ${b2a(a1)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${b2a(b1)}("b1");
+  style ${b2a(b1)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${b2a(c1)}("c1");
+  style ${b2a(c1)} color:white,stroke:black,fill:blue,stroke-width:4px;
+  ${b2a(d1)}("d1");
+  style ${b2a(d1)} color:white,stroke:black,fill:blue,stroke-width:0px;
+  ${b2a(e1)}("e1");
+  style ${b2a(e1)} color:white,stroke:black,fill:orange,stroke-width:0px;
+  ${b2a(a1)} --> ${b2a(b1)};
+  ${b2a(b1)} --> ${b2a(c1)};
+  ${b2a(c1)} --> ${b2a(d1)};
+  ${b2a(d1)} --> ${b2a(e1)};
 `;
     expect(actual).toBe(expected);
   });
