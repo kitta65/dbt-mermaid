@@ -28913,7 +28913,7 @@ async function main() {
 exports.main = main;
 function dummyProfile(profile) {
     return {
-        dbt_mermaid: {
+        [profile]: {
             target: "dev",
             outputs: {
                 dev: {
