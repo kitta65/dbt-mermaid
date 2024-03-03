@@ -29,12 +29,12 @@ export class Manifest {
   }
 
   vertices(entire: boolean, another?: Manifest): string[] {
-    let resources = this.resourcesAll(another);
+    const resources = this.resourcesAll(another);
     const statements: string[] = [];
     const verticesToDraw = this.resourcesToDraw(entire, another);
     for (const [key, value] of Object.entries(resources)) {
       const splited = key.split(".");
-      let text = splited.slice(2).join(".");
+      const text = splited.slice(2).join(".");
       const style: string[] = ["color:white", "stroke:black"];
       const type_ = splited[0];
       if (!isSupportedResourceType(type_)) {
@@ -94,7 +94,7 @@ export class Manifest {
   }
 
   edges(entire: boolean, another?: Manifest): string[] {
-    let mappings: { [key: string]: Status } = {};
+    const mappings: { [key: string]: Status } = {};
     for (const [parent, children] of Object.entries(this.data.child_map)) {
       for (const child of children) {
         // since base64 does not use `|`
@@ -118,7 +118,7 @@ export class Manifest {
     const verticesToDraw = this.resourcesToDraw(entire, another);
     let idx = 0;
     for (const [key, value] of Object.entries(mappings)) {
-      const [parent, child, ..._] = key.split("|");
+      const [parent, child] = key.split("|");
       if (!verticesToDraw.has(a2b(parent)) || !verticesToDraw.has(a2b(child))) {
         continue;
       }
@@ -140,7 +140,7 @@ export class Manifest {
   }
 
   resourcesAll(another?: Manifest) {
-    let resources: { [key: string]: Status } = {};
+    const resources: { [key: string]: Status } = {};
     for (const key of Object.keys({
       ...this.data.sources,
       ...this.data.nodes,

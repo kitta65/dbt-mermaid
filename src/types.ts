@@ -1,8 +1,8 @@
-type Source = {};
+type Source = object;
 type Node = {
   checksum: { checksum: string };
 }; // seed, model, snapshot, test, analysis
-type Exposure = {};
+type Exposure = object;
 type Resource = Source | Node | Exposure;
 
 export type Status = "identical" | "modified" | "new" | "deleted";

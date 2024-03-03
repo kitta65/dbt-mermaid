@@ -7,7 +7,7 @@
   "scripts": {
     "build": "ncc build src/index.ts --license licenses.txt",
     "format": "prettier . --write && pipx run --spec shandy-sqlfmt[jinjafmt] sqlfmt ./project/**/*.sql",
-    "test": "jest"
+    "test": "eslint && jest"
   },
   "keywords": [],
   "exports": {
@@ -23,10 +23,12 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.24",
     "@vercel/ncc": "^0.38.1",
+    "eslint": "^8.57.0",
     "pre-commit": "^1.2.2",
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^7.1.0"
   },
   "precommit": [
     "format",
