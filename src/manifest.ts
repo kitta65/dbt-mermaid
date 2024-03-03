@@ -48,8 +48,17 @@ export class Manifest {
         case "model":
           style.push("fill:blue");
           break;
+        case "snapshot":
+          style.push("fill:blue");
+          break;
         case "exposure":
           style.push("fill:orange");
+          break;
+        case "analysis":
+          style.push("fill:blue");
+          break;
+        case "test":
+          style.push("fill:blue");
           break;
       }
       switch (value) {

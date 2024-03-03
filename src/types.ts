@@ -1,7 +1,7 @@
 export type Source = {};
 export type Node = {
   checksum: { checksum: string };
-}; // seed or model
+}; // seed, model, snapshot, test, analysis
 export type Exposure = {};
 
 export type Resource = Source | Node | Exposure;
