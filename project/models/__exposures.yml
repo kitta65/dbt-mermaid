@@ -1,12 +1,12 @@
 version: 2
 exposures:
-  - name: user analysis
+  - name: user_analysis
     type: analysis
     owner:
       email: dbt.mermaid@example.com
     depends_on:
       - ref("users")
-  - name: session analysis
+  - name: session_analysis
     type: analysis
     owner:
       email: dbt.mermaid@example.com

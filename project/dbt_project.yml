@@ -6,6 +6,10 @@ profile: "dbt_mermaid"
 
 model-paths: ["models"]
 seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+
 clean-targets:
   - "target"
   - "dbt_packages"
