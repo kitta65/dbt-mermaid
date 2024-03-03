@@ -1,1 +1,1 @@
-select id as order_id, * except (id), from {{ source("source", "orders") }}
+select id as order_id from {{ source("source", "orders") }}
