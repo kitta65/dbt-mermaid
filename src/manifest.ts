@@ -9,7 +9,14 @@ import {
 import { a2b, b2a } from "./utils";
 
 export class Manifest {
-  constructor(private readonly data: ManifestData) {}
+  constructor(private readonly data: ManifestData) {
+    // TODO
+    // add resource type info
+    // remove unsupported resource type
+    // remove generic test
+    // add ancestors / successors field
+    //
+  }
   static async from(filepath: string): Promise<Manifest> {
     const data = await fs
       .readFile(filepath)
