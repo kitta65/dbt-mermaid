@@ -1,22 +1,21 @@
-import { flowchart } from "./main";
-import { Manifest } from "./types";
+import { Manifest } from "./manifest";
 
 describe("flowchart", () => {
   test("draw empty flowchart", () => {
-    const manifest: Manifest = {
+    const manifest = new Manifest({
       nodes: {},
       sources: {},
       exposures: {},
       child_map: {},
-    };
-    const actual = flowchart(manifest);
+    });
+    const actual = manifest.flowchart();
     const expected = `flowchart LR
 `;
     expect(actual).toBe(expected);
   });
 
   test("draw simple flowchart", () => {
-    const manifest: Manifest = {
+    const manifest = new Manifest({
       sources: {
         "source.project.a.a": {},
       },
@@ -30,8 +29,8 @@ describe("flowchart", () => {
         "source.project.a.a": ["model.project.b"],
         "model.project.b": ["exposure.project.c"],
       },
-    };
-    const actual = flowchart(manifest);
+    });
+    const actual = manifest.flowchart();
     const expected = `flowchart LR
   c291cmNlLnByb2plY3QuYS5h("a.a");
   style c291cmNlLnByb2plY3QuYS5h color:white,stroke:black,fill:green,stroke-width:0px;
@@ -46,7 +45,7 @@ describe("flowchart", () => {
   });
 
   test("draw simple flowchart using another manifest", () => {
-    const originalManifest: Manifest = {
+    const originalManifest = new Manifest({
       sources: {
         "source.project.a.a": {},
       },
@@ -60,8 +59,8 @@ describe("flowchart", () => {
         "source.project.a.a": ["model.project.b"],
         "model.project.b": ["exposure.project.c"],
       },
-    };
-    const modifiedManifest: Manifest = {
+    });
+    const modifiedManifest = new Manifest({
       sources: {
         "source.project.a.a": {},
       },
@@ -75,8 +74,8 @@ describe("flowchart", () => {
         "source.project.a.a": ["model.project.b"],
         "model.project.b": ["exposure.project.d"],
       },
-    };
-    const actual = flowchart(modifiedManifest, originalManifest);
+    });
+    const actual = modifiedManifest.flowchart(originalManifest);
     const expected = `flowchart LR
   c291cmNlLnByb2plY3QuYS5h("a.a");
   style c291cmNlLnByb2plY3QuYS5h color:white,stroke:black,fill:green,stroke-width:0px;
