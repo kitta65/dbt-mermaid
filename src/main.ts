@@ -27,11 +27,39 @@ export async function main() {
   core.setOutput("filepath", outpath);
 }
 
+const dummyProfile = {
+  dbt_mermaid: {
+    target: "dev",
+    outputs: {
+      dev: {
+        type: "postgres",
+        host: "postgres",
+        port: 5432,
+        dbname: "postgres",
+        schema: "main",
+        user: "postgres",
+        password: "password",
+      },
+    },
+  },
+};
+
 async function writeManifest(dbtVer: string) {
   const dbtVersion = core.getInput("dbt-version");
+  const profiles = "profiles.yml";
+
+  let cleanup = async () => await fs.unlink(profiles);
+  await fs.access(profiles).then(async () => {
+    const temp = `${profiles}.backup`;
+    await fs.rename(profiles, temp);
+    cleanup = async () => fs.rename(temp, profiles);
+  });
+
+  await fs.writeFile(profiles, JSON.stringify(dummyProfile));
   await exec(`pipx run --spec dbt-postgres==${dbtVersion} dbt deps`);
-  // TODO support other adapters
   await exec(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
+
+  await cleanup();
 }
 
 function readManifest(filepath: string): Promise<Manifest> {
