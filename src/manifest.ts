@@ -171,18 +171,38 @@ export class Manifest {
     }
 
     const set: Set<string> = new Set();
+    const addSuccessors = (child: string, manifest: ManifestData) => {
+      set.add(child);
+      if (child in manifest.child_map) {
+        const children = manifest.child_map[child];
+        children.forEach((c) => {
+          addSuccessors(c, manifest);
+        });
+      }
+    };
+    const addAncestors = (parent: string, manifest: ManifestData) => {
+      set.add(parent);
+      if (parent in manifest.parent_map) {
+        const parents = manifest.parent_map[parent];
+        parents.forEach((p) => {
+          addSuccessors(p, manifest);
+        });
+      }
+    };
     for (const manifest of [this.data, another.data]) {
       for (const [parent, children] of Object.entries(manifest.child_map)) {
         for (const child of children) {
           if (resources[parent] !== "identical") {
-            set.add(child);
+            set.add(parent);
+            addSuccessors(child, manifest);
           }
         }
       }
       for (const [child, parents] of Object.entries(manifest.parent_map)) {
         for (const parent of parents) {
           if (resources[child] !== "identical") {
-            set.add(parent);
+            set.add(child);
+            addAncestors(parent, manifest);
           }
         }
       }
