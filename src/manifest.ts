@@ -1,14 +1,12 @@
 import * as fs from "fs/promises";
-import { Source, Node, Exposure, Status, isNode } from "./types";
+import {
+  Status,
+  isNode,
+  ManifestData,
+  isSupportedResourceType,
+  supportedResourceTypes,
+} from "./types";
 import { a2b, b2a } from "./utils";
-
-type ManifestData = {
-  child_map: { [key: string]: string[] };
-  parent_map: { [key: string]: string[] };
-  sources: { [key: string]: Source };
-  nodes: { [key: string]: Node };
-  exposures: { [key: string]: Exposure };
-};
 
 export class Manifest {
   constructor(private readonly data: ManifestData) {}
@@ -38,7 +36,11 @@ export class Manifest {
       const splited = key.split(".");
       let text = splited.slice(2).join(".");
       const style: string[] = ["color:white", "stroke:black"];
-      switch (splited[0]) {
+      const type_ = splited[0];
+      if (!isSupportedResourceType(type_)) {
+        continue;
+      }
+      switch (type_) {
         case "source":
           style.push("fill:green");
           break;
@@ -217,6 +219,13 @@ export class Manifest {
       }
     }
 
-    return set;
+    // ignore not supported resource types (e.g. metrics)
+    const temp = [...set].filter((resource) => {
+      const splited = resource.split(".");
+      const type_ = splited[0];
+      return supportedResourceTypes.some((t) => t === type_);
+    });
+
+    return new Set(temp);
   }
 }

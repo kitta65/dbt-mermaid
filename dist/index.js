@@ -24899,7 +24899,11 @@ class Manifest {
             const splited = key.split(".");
             let text = splited.slice(2).join(".");
             const style = ["color:white", "stroke:black"];
-            switch (splited[0]) {
+            const type_ = splited[0];
+            if (!(0, types_1.isSupportedResourceType)(type_)) {
+                continue;
+            }
+            switch (type_) {
                 case "source":
                     style.push("fill:green");
                     break;
@@ -25072,7 +25076,13 @@ class Manifest {
                 }
             }
         }
-        return set;
+        // ignore not supported resource types (e.g. metrics)
+        const temp = [...set].filter((resource) => {
+            const splited = resource.split(".");
+            const type_ = splited[0];
+            return types_1.supportedResourceTypes.some((t) => t === type_);
+        });
+        return new Set(temp);
     }
 }
 exports.Manifest = Manifest;
@@ -25086,11 +25096,24 @@ exports.Manifest = Manifest;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isNode = void 0;
+exports.isSupportedResourceType = exports.supportedResourceTypes = exports.isNode = void 0;
 function isNode(resource) {
     return "checksum" in resource;
 }
 exports.isNode = isNode;
+exports.supportedResourceTypes = [
+    "source",
+    "seed",
+    "model",
+    "snapshot",
+    "exposure",
+    "analysis",
+    "test",
+];
+function isSupportedResourceType(s) {
+    return exports.supportedResourceTypes.some((t) => t === s);
+}
+exports.isSupportedResourceType = isSupportedResourceType;
 
 
 /***/ }),
