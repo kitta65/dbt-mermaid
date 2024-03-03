@@ -161,6 +161,7 @@ export class Manifest {
           if (isNode(value)) {
             const mainHash = this.data.nodes[key].checksum.checksum;
             const anotherHash = value.checksum.checksum;
+            if (!mainHash && !anotherHash) continue; // generic test
             resources[key] =
               mainHash === anotherHash ? "identical" : "modified";
           } else {
