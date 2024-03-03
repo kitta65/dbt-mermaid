@@ -27,3 +27,4 @@ jobs:
         with:
           comment_tag: from-actions-comment-pull-request
           filePath: /tmp/comment.md
+          draw-entire-lineage: false
