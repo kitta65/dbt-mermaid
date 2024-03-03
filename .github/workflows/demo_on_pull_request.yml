@@ -16,6 +16,7 @@ jobs:
           dbt-version: 1.7
           dbt-project: project
           dbt-project-to-compare-with: base/project
+          draw-entire-lineage: false
       - name: format comment message
         run: |
           comment_file=/tmp/comment.md
@@ -27,4 +28,3 @@ jobs:
         with:
           comment_tag: from-actions-comment-pull-request
           filePath: /tmp/comment.md
-          draw-entire-lineage: false
