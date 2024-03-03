@@ -117,7 +117,7 @@ export class Manifest {
     let idx = 0;
     for (const [key, value] of Object.entries(mappings)) {
       const [parent, child, ..._] = key.split("|");
-      if (!verticesToDraw.has(a2b(parent))) {
+      if (!verticesToDraw.has(a2b(parent)) || !verticesToDraw.has(a2b(child))) {
         continue;
       }
       switch (value) {

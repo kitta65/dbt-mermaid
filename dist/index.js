@@ -24974,7 +24974,7 @@ class Manifest {
         let idx = 0;
         for (const [key, value] of Object.entries(mappings)) {
             const [parent, child, ..._] = key.split("|");
-            if (!verticesToDraw.has((0, utils_1.a2b)(parent))) {
+            if (!verticesToDraw.has((0, utils_1.a2b)(parent)) || !verticesToDraw.has((0, utils_1.a2b)(child))) {
                 continue;
             }
             switch (value) {
