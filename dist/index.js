@@ -24775,27 +24775,27 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.flowchart = exports.main = void 0;
+exports.main = void 0;
 const fs = __importStar(__nccwpck_require__(3292));
 const core = __importStar(__nccwpck_require__(2186));
 const process = __importStar(__nccwpck_require__(7282));
 const utils_1 = __nccwpck_require__(1314);
-const types_1 = __nccwpck_require__(5077);
+const manifest_1 = __nccwpck_require__(1635);
 async function main() {
-    const dbtVersion = core.getInput("dbt-version");
     const moveBack = (0, utils_1.moveTo)(core.getInput("dbt-project"));
-    await writeManifest(dbtVersion);
-    const mainManifest = await readManifest("./target/manifest.json");
+    await preprocess();
+    const mainManifest = await manifest_1.Manifest.from("./target/manifest.json");
     moveBack();
     let anotherManifest;
     const anotherProject = core.getInput("dbt-project-to-compare-with");
     if (anotherProject) {
         const moveBack = (0, utils_1.moveTo)(anotherProject);
-        await writeManifest(dbtVersion);
-        anotherManifest = await readManifest("./target/manifest.json");
+        await preprocess();
+        anotherManifest = await manifest_1.Manifest.from("./target/manifest.json");
         moveBack();
     }
-    const chart = flowchart(mainManifest, anotherManifest);
+    const drawEntireLineage = core.getInput("draw-entire-lineage").toLowerCase() === "true";
+    const chart = mainManifest.flowchart(drawEntireLineage, anotherManifest);
     const outpath = `${process.cwd()}/lineage.mermaid`;
     await fs.writeFile(outpath, chart);
     core.setOutput("filepath", outpath);
@@ -24817,7 +24817,7 @@ const dummyProfile = {
         },
     },
 };
-async function writeManifest(dbtVer) {
+async function preprocess() {
     const dbtVersion = core.getInput("dbt-version");
     const profiles = "profiles.yml";
     let cleanup = async () => await fs.unlink(profiles);
@@ -24834,137 +24834,239 @@ async function writeManifest(dbtVer) {
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
     await cleanup();
 }
-function readManifest(filepath) {
-    return fs
-        .readFile(filepath)
-        .then((buffer) => String(buffer))
-        .then((json) => JSON.parse(json));
-}
-function flowchart(mainManifest, anotherManifest) {
-    const statements = [
-        ...vertices(mainManifest, anotherManifest),
-        ...edges(mainManifest, anotherManifest),
-    ];
-    const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
-    return mermaid;
-}
-exports.flowchart = flowchart;
-function vertices(mainManifest, anotherManifest) {
-    let resources = {};
-    for (const key of Object.keys({
-        ...mainManifest.sources,
-        ...mainManifest.nodes,
-        ...mainManifest.exposures,
-    })) {
-        resources[key] = "identical";
+
+
+/***/ }),
+
+/***/ 1635:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
-    if (anotherManifest) {
-        for (const key of Object.keys(resources)) {
-            resources[key] = "new";
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Manifest = void 0;
+const fs = __importStar(__nccwpck_require__(3292));
+const types_1 = __nccwpck_require__(5077);
+const utils_1 = __nccwpck_require__(1314);
+class Manifest {
+    data;
+    constructor(data) {
+        this.data = data;
+    }
+    static async from(filepath) {
+        const data = await fs
+            .readFile(filepath)
+            .then((buffer) => String(buffer))
+            .then((json) => JSON.parse(json));
+        return new Manifest(data);
+    }
+    flowchart(entire, another) {
+        const statements = [
+            ...this.vertices(entire, another),
+            ...this.edges(entire, another),
+        ];
+        const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
+        return mermaid;
+    }
+    vertices(entire, another) {
+        let resources = this.resourcesAll(another);
+        const statements = [];
+        const verticesToDraw = this.resourcesToDraw(entire, another);
+        for (const [key, value] of Object.entries(resources)) {
+            const splited = key.split(".");
+            let text = splited.slice(2).join(".");
+            const style = ["color:white", "stroke:black"];
+            switch (splited[0]) {
+                case "source":
+                    style.push("fill:green");
+                    break;
+                case "seed":
+                    style.push("fill:blue");
+                    break;
+                case "model":
+                    style.push("fill:blue");
+                    break;
+                case "exposure":
+                    style.push("fill:orange");
+                    break;
+            }
+            switch (value) {
+                case "deleted":
+                    style.push("stroke-width:4px");
+                    style.push("stroke-dasharray: 5 5");
+                    break;
+                case "identical":
+                    style.push("stroke-width:0px");
+                    break;
+                case "modified":
+                    style.push("stroke-width:4px");
+                    break;
+                case "new":
+                    style.push("stroke-width:4px");
+                    break;
+            }
+            if (!verticesToDraw.has(key)) {
+                continue;
+            }
+            // NOTE
+            // name may contain special character (e.g. white space)
+            // which is not allowed in flowchart id
+            const id = (0, utils_1.b2a)(key);
+            statements.push(`${id}("${text}")`);
+            statements.push(`style ${id} ${style.join(",")}`);
         }
-        for (const [key, value] of Object.entries({
-            ...anotherManifest.sources,
-            ...anotherManifest.nodes,
-            ...anotherManifest.exposures,
+        return statements;
+    }
+    edges(entire, another) {
+        let mappings = {};
+        for (const [parent, children] of Object.entries(this.data.child_map)) {
+            for (const child of children) {
+                // since base64 does not use `|`
+                // it is a good separator
+                mappings[`${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`] = "identical";
+            }
+        }
+        if (another) {
+            for (const key of Object.keys(mappings)) {
+                mappings[key] = "new";
+            }
+            for (const [parent, children] of Object.entries(another.data.child_map)) {
+                for (const child of children) {
+                    const key = `${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`;
+                    mappings[key] = key in mappings ? "identical" : "deleted";
+                }
+            }
+        }
+        const statements = [];
+        const verticesToDraw = this.resourcesToDraw(entire, another);
+        let idx = 0;
+        for (const [key, value] of Object.entries(mappings)) {
+            const [parent, child, ..._] = key.split("|");
+            if (!verticesToDraw.has((0, utils_1.a2b)(parent))) {
+                continue;
+            }
+            switch (value) {
+                case "deleted":
+                    statements.push(`${parent} -.-> ${child}`);
+                    break;
+                case "identical":
+                    statements.push(`${parent} --> ${child}`);
+                    break;
+                case "new":
+                    statements.push(`${parent} --> ${child}`);
+                    statements.push(`linkStyle ${idx} stroke-width:4px`);
+                    break;
+            }
+            idx++;
+        }
+        return statements;
+    }
+    resourcesAll(another) {
+        let resources = {};
+        for (const key of Object.keys({
+            ...this.data.sources,
+            ...this.data.nodes,
+            ...this.data.exposures,
         })) {
-            if (key in resources) {
-                if ((0, types_1.isNode)(value)) {
-                    const mainHash = mainManifest.nodes[key].checksum.checksum;
-                    const anotherHash = value.checksum.checksum;
-                    resources[key] = mainHash === anotherHash ? "identical" : "modified";
+            resources[key] = "identical";
+        }
+        if (another) {
+            for (const key of Object.keys(resources)) {
+                resources[key] = "new";
+            }
+            for (const [key, value] of Object.entries({
+                ...another.data.sources,
+                ...another.data.nodes,
+                ...another.data.exposures,
+            })) {
+                if (key in resources) {
+                    if ((0, types_1.isNode)(value)) {
+                        const mainHash = this.data.nodes[key].checksum.checksum;
+                        const anotherHash = value.checksum.checksum;
+                        resources[key] =
+                            mainHash === anotherHash ? "identical" : "modified";
+                    }
+                    else {
+                        resources[key] = "identical";
+                    }
                 }
                 else {
-                    resources[key] = "identical";
+                    resources[key] = "deleted";
                 }
             }
-            else {
-                resources[key] = "deleted";
+        }
+        return resources;
+    }
+    resourcesToDraw(entire, another) {
+        const resources = this.resourcesAll(another);
+        if (entire || !another) {
+            const set = new Set(Object.keys(resources));
+            return set;
+        }
+        const set = new Set();
+        const addSuccessors = (child, manifest) => {
+            set.add(child);
+            if (child in manifest.child_map) {
+                const children = manifest.child_map[child];
+                children.forEach((c) => {
+                    addSuccessors(c, manifest);
+                });
+            }
+        };
+        const addAncestors = (parent, manifest) => {
+            set.add(parent);
+            if (parent in manifest.parent_map) {
+                const parents = manifest.parent_map[parent];
+                parents.forEach((p) => {
+                    addSuccessors(p, manifest);
+                });
+            }
+        };
+        for (const manifest of [this.data, another.data]) {
+            for (const [parent, children] of Object.entries(manifest.child_map)) {
+                for (const child of children) {
+                    if (resources[parent] !== "identical") {
+                        set.add(parent);
+                        addSuccessors(child, manifest);
+                    }
+                }
+            }
+            for (const [child, parents] of Object.entries(manifest.parent_map)) {
+                for (const parent of parents) {
+                    if (resources[child] !== "identical") {
+                        set.add(child);
+                        addAncestors(parent, manifest);
+                    }
+                }
             }
         }
+        return set;
     }
-    const statements = [];
-    for (const [key, value] of Object.entries(resources)) {
-        const splited = key.split(".");
-        let text = splited.slice(2).join(".");
-        const style = ["color:white", "stroke:black"];
-        switch (splited[0]) {
-            case "source":
-                style.push("fill:green");
-                break;
-            case "seed":
-                style.push("fill:blue");
-                break;
-            case "model":
-                style.push("fill:blue");
-                break;
-            case "exposure":
-                style.push("fill:orange");
-                break;
-        }
-        switch (value) {
-            case "deleted":
-                style.push("stroke-width:4px");
-                style.push("stroke-dasharray: 5 5");
-                break;
-            case "identical":
-                style.push("stroke-width:0px");
-                break;
-            case "modified":
-                style.push("stroke-width:4px");
-                break;
-            case "new":
-                style.push("stroke-width:4px");
-                break;
-        }
-        // NOTE
-        // name may contain special character (e.g. white space)
-        // which is not allowed in flowchart id
-        const id = (0, utils_1.b2a)(key);
-        statements.push(`${id}("${text}")`);
-        statements.push(`style ${id} ${style.join(",")}`);
-    }
-    return statements;
 }
-function edges(mainManifest, anotherManifest) {
-    let mappings = {};
-    for (const [parent, children] of Object.entries(mainManifest.child_map)) {
-        for (const child of children) {
-            // since base64 does not use `|`
-            // it is a good separator
-            mappings[`${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`] = "identical";
-        }
-    }
-    if (anotherManifest) {
-        for (const key of Object.keys(mappings)) {
-            mappings[key] = "new";
-        }
-        for (const [parent, children] of Object.entries(anotherManifest.child_map)) {
-            for (const child of children) {
-                const key = `${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`;
-                mappings[key] = key in mappings ? "identical" : "deleted";
-            }
-        }
-    }
-    const statements = [];
-    let idx = 0;
-    for (const [key, value] of Object.entries(mappings)) {
-        const [parent, child, ..._] = key.split("|");
-        switch (value) {
-            case "deleted":
-                statements.push(`${parent} -.-> ${child}`);
-                break;
-            case "identical":
-                statements.push(`${parent} --> ${child}`);
-                break;
-            case "new":
-                statements.push(`${parent} --> ${child}`);
-                statements.push(`linkStyle ${idx} stroke-width:4px`);
-                break;
-        }
-        idx++;
-    }
-    return statements;
-}
+exports.Manifest = Manifest;
 
 
 /***/ }),
@@ -25032,7 +25134,7 @@ exports.b2a = b2a;
 function a2b(b64) {
     // it seems that padding (=) is not needed
     const str = b64.replace(/-/g, "+").replace(/_/g, "\\");
-    return decodeURIComponent(str);
+    return decodeURIComponent(atob(str));
 }
 exports.a2b = a2b;
 function moveTo(path) {
