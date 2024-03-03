@@ -32,3 +32,10 @@ export type ManifestData = {
   nodes: { [key: string]: Node };
   exposures: { [key: string]: Exposure };
 };
+
+type DBTProjectYml = {
+  profile: string;
+};
+export function isDBTProjectYml(value: unknown): value is DBTProjectYml {
+  return typeof value === "object" && value !== null && "profile" in value;
+}
