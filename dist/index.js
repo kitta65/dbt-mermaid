@@ -28994,6 +28994,12 @@ class Manifest {
     data;
     constructor(data) {
         this.data = data;
+        // TODO
+        // add resource type info
+        // remove unsupported resource type
+        // remove generic test
+        // add ancestors / successors field
+        //
     }
     static async from(filepath) {
         const data = await fs

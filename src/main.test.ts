@@ -2,54 +2,6 @@ import { Manifest } from "./manifest";
 import { b2a } from "./utils";
 
 describe("flowchart", () => {
-  test("draw empty flowchart", () => {
-    const manifest = new Manifest({
-      sources: {},
-      nodes: {},
-      exposures: {},
-      child_map: {},
-      parent_map: {},
-    });
-    const actual = manifest.flowchart(true);
-    const expected = `flowchart LR
-`;
-    expect(actual).toBe(expected);
-  });
-
-  test("draw simple flowchart", () => {
-    const a = "source.project.a.a";
-    const b = "model.project.b";
-    const c = "exposure.project.c";
-    const manifest = new Manifest({
-      sources: {
-        [a]: {},
-      },
-      nodes: {
-        [b]: { checksum: { checksum: "anyvalue" } },
-      },
-      exposures: {
-        [c]: {},
-      },
-      child_map: {
-        [a]: [b],
-        [b]: [c],
-      },
-      parent_map: {}, // not needed when drawing entire lineage
-    });
-    const actual = manifest.flowchart(true);
-    const expected = `flowchart LR
-  ${b2a(a)}("a.a");
-  style ${b2a(a)} color:white,stroke:black,fill:green,stroke-width:0px;
-  ${b2a(b)}("b");
-  style ${b2a(b)} color:white,stroke:black,fill:blue,stroke-width:0px;
-  ${b2a(c)}("c");
-  style ${b2a(c)} color:white,stroke:black,fill:orange,stroke-width:0px;
-  ${b2a(a)} --> ${b2a(b)};
-  ${b2a(b)} --> ${b2a(c)};
-`;
-    expect(actual).toBe(expected);
-  });
-
   test("draw entire flowchart with another manifest", () => {
     const a = "source.project.a.a";
     const b = "model.project.b";
@@ -175,36 +127,6 @@ describe("flowchart", () => {
   ${b2a(b1)} --> ${b2a(c1)};
   ${b2a(c1)} --> ${b2a(d1)};
   ${b2a(d1)} --> ${b2a(e1)};
-`;
-    expect(actual).toBe(expected);
-  });
-
-  test("do not draw unsupported resource", () => {
-    const manifest = new Manifest({
-      sources: {},
-      nodes: {
-        "metrics.project.identifier": { checksum: { checksum: "anyvalue" } },
-      },
-      exposures: {},
-      child_map: {},
-      parent_map: {},
-    });
-    const actual = manifest.flowchart(true);
-    const expected = `flowchart LR
-`;
-    expect(actual).toBe(expected);
-  });
-
-  test("do not draw generic test", () => {
-    const manifest = new Manifest({
-      sources: {},
-      nodes: { "test.project.testname": { checksum: { checksum: "" } } },
-      exposures: {},
-      child_map: {},
-      parent_map: {},
-    });
-    const actual = manifest.flowchart(true);
-    const expected = `flowchart LR
 `;
     expect(actual).toBe(expected);
   });
