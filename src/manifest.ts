@@ -180,11 +180,18 @@ export class Manifest {
     const resources = this.resourcesAll(another);
     if (entire || !another) {
       const set: Set<string> = new Set(Object.keys(resources));
-      return set;
+      // ignore not supported resource types (e.g. metrics)
+      const temp = [...set].filter((resource) => {
+        const splited = resource.split(".");
+        const type_ = splited[0];
+        return supportedResourceTypes.some((t) => t === type_);
+      });
+      return new Set(temp);
     }
 
     const set: Set<string> = new Set();
     const addSuccessors = (child: string, manifest: ManifestData) => {
+      if (!(child in resources)) return;
       set.add(child);
       if (child in manifest.child_map) {
         const children = manifest.child_map[child];
@@ -194,6 +201,7 @@ export class Manifest {
       }
     };
     const addAncestors = (parent: string, manifest: ManifestData) => {
+      if (!(parent in resources)) return;
       set.add(parent);
       if (parent in manifest.parent_map) {
         const parents = manifest.parent_map[parent];
@@ -205,7 +213,7 @@ export class Manifest {
     for (const manifest of [this.data, another.data]) {
       for (const [parent, children] of Object.entries(manifest.child_map)) {
         for (const child of children) {
-          if (resources[parent] !== "identical") {
+          if (resources[parent] && resources[parent] !== "identical") {
             set.add(parent);
             addSuccessors(child, manifest);
           }
@@ -213,7 +221,7 @@ export class Manifest {
       }
       for (const [child, parents] of Object.entries(manifest.parent_map)) {
         for (const parent of parents) {
-          if (resources[child] !== "identical") {
+          if (resources[parent] && resources[child] !== "identical") {
             set.add(child);
             addAncestors(parent, manifest);
           }
