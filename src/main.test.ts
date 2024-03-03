@@ -7,8 +7,9 @@ describe("flowchart", () => {
       sources: {},
       exposures: {},
       child_map: {},
+      parent_map: {},
     });
-    const actual = manifest.flowchart();
+    const actual = manifest.flowchart(true);
     const expected = `flowchart LR
 `;
     expect(actual).toBe(expected);
@@ -29,8 +30,9 @@ describe("flowchart", () => {
         "source.project.a.a": ["model.project.b"],
         "model.project.b": ["exposure.project.c"],
       },
+      parent_map: {}, // not needed when drawing entire lineage
     });
-    const actual = manifest.flowchart();
+    const actual = manifest.flowchart(true);
     const expected = `flowchart LR
   c291cmNlLnByb2plY3QuYS5h("a.a");
   style c291cmNlLnByb2plY3QuYS5h color:white,stroke:black,fill:green,stroke-width:0px;
@@ -59,6 +61,7 @@ describe("flowchart", () => {
         "source.project.a.a": ["model.project.b"],
         "model.project.b": ["exposure.project.c"],
       },
+      parent_map: {}, // not needed when drawing entire lineage
     });
     const modifiedManifest = new Manifest({
       sources: {
@@ -74,8 +77,9 @@ describe("flowchart", () => {
         "source.project.a.a": ["model.project.b"],
         "model.project.b": ["exposure.project.d"],
       },
+      parent_map: {}, // not needed when drawing entire lineage
     });
-    const actual = modifiedManifest.flowchart(originalManifest);
+    const actual = modifiedManifest.flowchart(true, originalManifest);
     const expected = `flowchart LR
   c291cmNlLnByb2plY3QuYS5h("a.a");
   style c291cmNlLnByb2plY3QuYS5h color:white,stroke:black,fill:green,stroke-width:0px;

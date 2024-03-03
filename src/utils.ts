@@ -15,7 +15,7 @@ export function b2a(str: string) {
 export function a2b(b64: string) {
   // it seems that padding (=) is not needed
   const str = b64.replace(/-/g, "+").replace(/_/g, "\\");
-  return decodeURIComponent(str);
+  return decodeURIComponent(atob(str));
 }
 
 export function moveTo(path: string) {

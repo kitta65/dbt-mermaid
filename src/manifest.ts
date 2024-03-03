@@ -1,9 +1,10 @@
 import * as fs from "fs/promises";
 import { Source, Node, Exposure, Status, isNode } from "./types";
-import { b2a } from "./utils";
+import { a2b, b2a } from "./utils";
 
-export type ManifestData = {
+type ManifestData = {
   child_map: { [key: string]: string[] };
+  parent_map: { [key: string]: string[] };
   sources: { [key: string]: Source };
   nodes: { [key: string]: Node };
   exposures: { [key: string]: Exposure };
@@ -19,47 +20,20 @@ export class Manifest {
     return new Manifest(data);
   }
 
-  flowchart(another?: Manifest): string {
-    const statements = [...this.vertices(another), ...this.edges(another)];
+  flowchart(entire: boolean, another?: Manifest): string {
+    const statements = [
+      ...this.vertices(entire, another),
+      ...this.edges(entire, another),
+    ];
     const mermaid =
       "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
     return mermaid;
   }
 
-  vertices(another?: Manifest): string[] {
-    let resources: { [key: string]: Status } = {};
-    for (const key of Object.keys({
-      ...this.data.sources,
-      ...this.data.nodes,
-      ...this.data.exposures,
-    })) {
-      resources[key] = "identical";
-    }
-    if (another) {
-      for (const key of Object.keys(resources)) {
-        resources[key] = "new";
-      }
-      for (const [key, value] of Object.entries({
-        ...another.data.sources,
-        ...another.data.nodes,
-        ...another.data.exposures,
-      })) {
-        if (key in resources) {
-          if (isNode(value)) {
-            const mainHash = this.data.nodes[key].checksum.checksum;
-            const anotherHash = value.checksum.checksum;
-            resources[key] =
-              mainHash === anotherHash ? "identical" : "modified";
-          } else {
-            resources[key] = "identical";
-          }
-        } else {
-          resources[key] = "deleted";
-        }
-      }
-    }
-
+  vertices(entire: boolean, another?: Manifest): string[] {
+    let resources = this.resourcesAll(another);
     const statements: string[] = [];
+    const verticesToDraw = this.resourcesToDraw(entire, another);
     for (const [key, value] of Object.entries(resources)) {
       const splited = key.split(".");
       let text = splited.slice(2).join(".");
@@ -94,6 +68,10 @@ export class Manifest {
           break;
       }
 
+      if (!verticesToDraw.has(key)) {
+        continue;
+      }
+
       // NOTE
       // name may contain special character (e.g. white space)
       // which is not allowed in flowchart id
@@ -104,7 +82,7 @@ export class Manifest {
     return statements;
   }
 
-  edges(another?: Manifest): string[] {
+  edges(entire: boolean, another?: Manifest): string[] {
     let mappings: { [key: string]: Status } = {};
     for (const [parent, children] of Object.entries(this.data.child_map)) {
       for (const child of children) {
@@ -124,10 +102,15 @@ export class Manifest {
         }
       }
     }
+
     const statements: string[] = [];
+    const verticesToDraw = this.resourcesToDraw(entire, another);
     let idx = 0;
     for (const [key, value] of Object.entries(mappings)) {
       const [parent, child, ..._] = key.split("|");
+      if (!verticesToDraw.has(a2b(parent))) {
+        continue;
+      }
       switch (value) {
         case "deleted":
           statements.push(`${parent} -.-> ${child}`);
@@ -143,5 +126,68 @@ export class Manifest {
       idx++;
     }
     return statements;
+  }
+
+  resourcesAll(another?: Manifest) {
+    let resources: { [key: string]: Status } = {};
+    for (const key of Object.keys({
+      ...this.data.sources,
+      ...this.data.nodes,
+      ...this.data.exposures,
+    })) {
+      resources[key] = "identical";
+    }
+    if (another) {
+      for (const key of Object.keys(resources)) {
+        resources[key] = "new";
+      }
+      for (const [key, value] of Object.entries({
+        ...another.data.sources,
+        ...another.data.nodes,
+        ...another.data.exposures,
+      })) {
+        if (key in resources) {
+          if (isNode(value)) {
+            const mainHash = this.data.nodes[key].checksum.checksum;
+            const anotherHash = value.checksum.checksum;
+            resources[key] =
+              mainHash === anotherHash ? "identical" : "modified";
+          } else {
+            resources[key] = "identical";
+          }
+        } else {
+          resources[key] = "deleted";
+        }
+      }
+    }
+    return resources;
+  }
+
+  resourcesToDraw(entire: boolean, another?: Manifest) {
+    const resources = this.resourcesAll(another);
+    if (entire || !another) {
+      const set: Set<string> = new Set(Object.keys(resources));
+      return set;
+    }
+
+    const set: Set<string> = new Set();
+    for (const manifest of [this.data, another.data]) {
+      for (const [parent, children] of Object.entries(manifest.child_map)) {
+        for (const child of children) {
+          if (resources[parent] !== "identical") {
+            set.add(child);
+          }
+        }
+      }
+      for (const [child, parents] of Object.entries(manifest.parent_map)) {
+        for (const parent of parents) {
+          if (resources[child] !== "identical") {
+            set.add(parent);
+          }
+        }
+      }
+    }
+
+    return set;
   }
 }

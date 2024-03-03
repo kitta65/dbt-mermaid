@@ -24794,7 +24794,8 @@ async function main() {
         anotherManifest = await manifest_1.Manifest.from("./target/manifest.json");
         moveBack();
     }
-    const chart = mainManifest.flowchart(anotherManifest);
+    const drawEntireLineage = core.getInput("draw-entire-lineage").toLowerCase() === "true";
+    const chart = mainManifest.flowchart(drawEntireLineage, anotherManifest);
     const outpath = `${process.cwd()}/lineage.mermaid`;
     await fs.writeFile(outpath, chart);
     core.setOutput("filepath", outpath);
@@ -24882,46 +24883,18 @@ class Manifest {
             .then((json) => JSON.parse(json));
         return new Manifest(data);
     }
-    flowchart(another) {
-        const statements = [...this.vertices(another), ...this.edges(another)];
+    flowchart(entire, another) {
+        const statements = [
+            ...this.vertices(entire, another),
+            ...this.edges(entire, another),
+        ];
         const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
         return mermaid;
     }
-    vertices(another) {
-        let resources = {};
-        for (const key of Object.keys({
-            ...this.data.sources,
-            ...this.data.nodes,
-            ...this.data.exposures,
-        })) {
-            resources[key] = "identical";
-        }
-        if (another) {
-            for (const key of Object.keys(resources)) {
-                resources[key] = "new";
-            }
-            for (const [key, value] of Object.entries({
-                ...another.data.sources,
-                ...another.data.nodes,
-                ...another.data.exposures,
-            })) {
-                if (key in resources) {
-                    if ((0, types_1.isNode)(value)) {
-                        const mainHash = this.data.nodes[key].checksum.checksum;
-                        const anotherHash = value.checksum.checksum;
-                        resources[key] =
-                            mainHash === anotherHash ? "identical" : "modified";
-                    }
-                    else {
-                        resources[key] = "identical";
-                    }
-                }
-                else {
-                    resources[key] = "deleted";
-                }
-            }
-        }
+    vertices(entire, another) {
+        let resources = this.resourcesAll(another);
         const statements = [];
+        const verticesToDraw = this.resourcesToDraw(entire, another);
         for (const [key, value] of Object.entries(resources)) {
             const splited = key.split(".");
             let text = splited.slice(2).join(".");
@@ -24955,6 +24928,9 @@ class Manifest {
                     style.push("stroke-width:4px");
                     break;
             }
+            if (!verticesToDraw.has(key)) {
+                continue;
+            }
             // NOTE
             // name may contain special character (e.g. white space)
             // which is not allowed in flowchart id
@@ -24964,7 +24940,7 @@ class Manifest {
         }
         return statements;
     }
-    edges(another) {
+    edges(entire, another) {
         let mappings = {};
         for (const [parent, children] of Object.entries(this.data.child_map)) {
             for (const child of children) {
@@ -24985,9 +24961,13 @@ class Manifest {
             }
         }
         const statements = [];
+        const verticesToDraw = this.resourcesToDraw(entire, another);
         let idx = 0;
         for (const [key, value] of Object.entries(mappings)) {
             const [parent, child, ..._] = key.split("|");
+            if (!verticesToDraw.has((0, utils_1.a2b)(parent))) {
+                continue;
+            }
             switch (value) {
                 case "deleted":
                     statements.push(`${parent} -.-> ${child}`);
@@ -25003,6 +24983,67 @@ class Manifest {
             idx++;
         }
         return statements;
+    }
+    resourcesAll(another) {
+        let resources = {};
+        for (const key of Object.keys({
+            ...this.data.sources,
+            ...this.data.nodes,
+            ...this.data.exposures,
+        })) {
+            resources[key] = "identical";
+        }
+        if (another) {
+            for (const key of Object.keys(resources)) {
+                resources[key] = "new";
+            }
+            for (const [key, value] of Object.entries({
+                ...another.data.sources,
+                ...another.data.nodes,
+                ...another.data.exposures,
+            })) {
+                if (key in resources) {
+                    if ((0, types_1.isNode)(value)) {
+                        const mainHash = this.data.nodes[key].checksum.checksum;
+                        const anotherHash = value.checksum.checksum;
+                        resources[key] =
+                            mainHash === anotherHash ? "identical" : "modified";
+                    }
+                    else {
+                        resources[key] = "identical";
+                    }
+                }
+                else {
+                    resources[key] = "deleted";
+                }
+            }
+        }
+        return resources;
+    }
+    resourcesToDraw(entire, another) {
+        const resources = this.resourcesAll(another);
+        if (entire || !another) {
+            const set = new Set(Object.keys(resources));
+            return set;
+        }
+        const set = new Set();
+        for (const manifest of [this.data, another.data]) {
+            for (const [parent, children] of Object.entries(manifest.child_map)) {
+                for (const child of children) {
+                    if (resources[parent] !== "identical") {
+                        set.add(child);
+                    }
+                }
+            }
+            for (const [child, parents] of Object.entries(manifest.parent_map)) {
+                for (const parent of parents) {
+                    if (resources[child] !== "identical") {
+                        set.add(parent);
+                    }
+                }
+            }
+        }
+        return set;
     }
 }
 exports.Manifest = Manifest;
@@ -25073,7 +25114,7 @@ exports.b2a = b2a;
 function a2b(b64) {
     // it seems that padding (=) is not needed
     const str = b64.replace(/-/g, "+").replace(/_/g, "\\");
-    return decodeURIComponent(str);
+    return decodeURIComponent(atob(str));
 }
 exports.a2b = a2b;
 function moveTo(path) {

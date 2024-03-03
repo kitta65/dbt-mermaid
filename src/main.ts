@@ -18,8 +18,9 @@ export async function main() {
     anotherManifest = await Manifest.from("./target/manifest.json");
     moveBack();
   }
-
-  const chart = mainManifest.flowchart(anotherManifest);
+  const drawEntireLineage =
+    core.getInput("draw-entire-lineage").toLowerCase() === "true";
+  const chart = mainManifest.flowchart(drawEntireLineage, anotherManifest);
   const outpath = `${process.cwd()}/lineage.mermaid`;
   await fs.writeFile(outpath, chart);
   core.setOutput("filepath", outpath);
