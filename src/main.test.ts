@@ -4,8 +4,8 @@ import { b2a } from "./utils";
 describe("flowchart", () => {
   test("draw empty flowchart", () => {
     const manifest = new Manifest({
-      nodes: {},
       sources: {},
+      nodes: {},
       exposures: {},
       child_map: {},
       parent_map: {},
@@ -175,6 +175,22 @@ describe("flowchart", () => {
   ${b2a(b1)} --> ${b2a(c1)};
   ${b2a(c1)} --> ${b2a(d1)};
   ${b2a(d1)} --> ${b2a(e1)};
+`;
+    expect(actual).toBe(expected);
+  });
+
+  test("do not draw unsupported resource", () => {
+    const manifest = new Manifest({
+      sources: {},
+      nodes: {
+        "metrics.project.identifier": { checksum: { checksum: "anyvalue" } },
+      },
+      exposures: {},
+      child_map: {},
+      parent_map: {},
+    });
+    const actual = manifest.flowchart(true);
+    const expected = `flowchart LR
 `;
     expect(actual).toBe(expected);
   });
