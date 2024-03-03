@@ -141,11 +141,12 @@ export class Manifest {
 
   resourcesAll(another?: Manifest) {
     const resources: { [key: string]: Status } = {};
-    for (const key of Object.keys({
+    for (const [key, value] of Object.entries({
       ...this.data.sources,
       ...this.data.nodes,
       ...this.data.exposures,
     })) {
+      if (isNode(value) && !value.checksum.checksum) continue; // generic test
       resources[key] = "identical";
     }
     if (another) {
@@ -161,13 +162,13 @@ export class Manifest {
           if (isNode(value)) {
             const mainHash = this.data.nodes[key].checksum.checksum;
             const anotherHash = value.checksum.checksum;
-            if (!mainHash && !anotherHash) continue; // generic test
             resources[key] =
               mainHash === anotherHash ? "identical" : "modified";
           } else {
             resources[key] = "identical";
           }
         } else {
+          if (isNode(value) && !value.checksum.checksum) continue; // generic test
           resources[key] = "deleted";
         }
       }

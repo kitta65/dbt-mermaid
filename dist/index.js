@@ -29118,11 +29118,13 @@ class Manifest {
     }
     resourcesAll(another) {
         const resources = {};
-        for (const key of Object.keys({
+        for (const [key, value] of Object.entries({
             ...this.data.sources,
             ...this.data.nodes,
             ...this.data.exposures,
         })) {
+            if ((0, types_1.isNode)(value) && !value.checksum.checksum)
+                continue; // generic test
             resources[key] = "identical";
         }
         if (another) {
@@ -29138,8 +29140,6 @@ class Manifest {
                     if ((0, types_1.isNode)(value)) {
                         const mainHash = this.data.nodes[key].checksum.checksum;
                         const anotherHash = value.checksum.checksum;
-                        if (!mainHash && !anotherHash)
-                            continue; // generic test
                         resources[key] =
                             mainHash === anotherHash ? "identical" : "modified";
                     }
@@ -29148,6 +29148,8 @@ class Manifest {
                     }
                 }
                 else {
+                    if ((0, types_1.isNode)(value) && !value.checksum.checksum)
+                        continue; // generic test
                     resources[key] = "deleted";
                 }
             }

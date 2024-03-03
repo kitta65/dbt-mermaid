@@ -194,4 +194,18 @@ describe("flowchart", () => {
 `;
     expect(actual).toBe(expected);
   });
+
+  test("do not draw generic test", () => {
+    const manifest = new Manifest({
+      sources: {},
+      nodes: { "test.project.testname": { checksum: { checksum: "" } } },
+      exposures: {},
+      child_map: {},
+      parent_map: {},
+    });
+    const actual = manifest.flowchart(true);
+    const expected = `flowchart LR
+`;
+    expect(actual).toBe(expected);
+  });
 });
