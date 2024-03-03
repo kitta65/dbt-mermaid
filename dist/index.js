@@ -24892,12 +24892,12 @@ class Manifest {
         return mermaid;
     }
     vertices(entire, another) {
-        let resources = this.resourcesAll(another);
+        const resources = this.resourcesAll(another);
         const statements = [];
         const verticesToDraw = this.resourcesToDraw(entire, another);
         for (const [key, value] of Object.entries(resources)) {
             const splited = key.split(".");
-            let text = splited.slice(2).join(".");
+            const text = splited.slice(2).join(".");
             const style = ["color:white", "stroke:black"];
             const type_ = splited[0];
             if (!(0, types_1.isSupportedResourceType)(type_)) {
@@ -24954,7 +24954,7 @@ class Manifest {
         return statements;
     }
     edges(entire, another) {
-        let mappings = {};
+        const mappings = {};
         for (const [parent, children] of Object.entries(this.data.child_map)) {
             for (const child of children) {
                 // since base64 does not use `|`
@@ -24977,7 +24977,7 @@ class Manifest {
         const verticesToDraw = this.resourcesToDraw(entire, another);
         let idx = 0;
         for (const [key, value] of Object.entries(mappings)) {
-            const [parent, child, ..._] = key.split("|");
+            const [parent, child] = key.split("|");
             if (!verticesToDraw.has((0, utils_1.a2b)(parent)) || !verticesToDraw.has((0, utils_1.a2b)(child))) {
                 continue;
             }
@@ -24998,7 +24998,7 @@ class Manifest {
         return statements;
     }
     resourcesAll(another) {
-        let resources = {};
+        const resources = {};
         for (const key of Object.keys({
             ...this.data.sources,
             ...this.data.nodes,
