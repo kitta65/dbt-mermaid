@@ -24821,11 +24821,14 @@ async function writeManifest(dbtVer) {
     const dbtVersion = core.getInput("dbt-version");
     const profiles = "profiles.yml";
     let cleanup = async () => await fs.unlink(profiles);
-    await fs.access(profiles).then(async () => {
+    await fs
+        .access(profiles)
+        .then(async () => {
         const temp = `${profiles}.backup`;
         await fs.rename(profiles, temp);
         cleanup = async () => fs.rename(temp, profiles);
-    });
+    })
+        .catch(() => { }); // NOP
     await fs.writeFile(profiles, JSON.stringify(dummyProfile));
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt deps`);
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
