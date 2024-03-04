@@ -18,7 +18,7 @@ export function a2b(b64: string) {
   return decodeURIComponent(atob(str));
 }
 
-export function moveTo(path: string) {
+export function go(path: string) {
   const curr = process.cwd();
   process.chdir(path);
   return () => process.chdir(curr);

@@ -28813,6 +28813,245 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 3679:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Flowchart = void 0;
+const fs = __importStar(__nccwpck_require__(3292));
+const types_1 = __nccwpck_require__(5077);
+const utils_1 = __nccwpck_require__(1314);
+class Flowchart {
+    manifest;
+    vertices;
+    edges;
+    constructor(manifest) {
+        this.manifest = manifest;
+        this.vertices = [];
+        for (const [key, value] of Object.entries({
+            ...manifest.sources,
+            ...manifest.nodes,
+            ...manifest.exposures,
+        })) {
+            const splited = key.split(".");
+            const type_ = splited[0];
+            // ignore unsupported resources
+            if (!(0, types_1.isSupportedResourceType)(type_))
+                continue;
+            // ignore generic test
+            if ((0, types_1.isNode)(value) && value.checksum.checksum === "")
+                continue;
+            this.vertices.push({
+                name: key,
+                type: type_,
+                status: "identical",
+                hash: (0, types_1.isNode)(value) ? value.checksum.checksum : "",
+            });
+        }
+        this.edges = [];
+        for (const [parent, children] of Object.entries(manifest.child_map)) {
+            for (const child of children) {
+                if (this.vertices.every((v) => v.name === child))
+                    continue;
+                if (this.vertices.every((v) => v.name === parent))
+                    continue;
+                this.edges.push({ parent, child, status: "identical" });
+            }
+        }
+    }
+    static async from(filepath) {
+        const manifest = await fs
+            .readFile(filepath)
+            .then((buffer) => String(buffer))
+            .then((json) => JSON.parse(json));
+        return new Flowchart(manifest);
+    }
+    compare(flowchart) {
+        for (const vertex of this.vertices) {
+            vertex.status = "new";
+        }
+        for (const edge of this.edges) {
+            edge.status = "new";
+        }
+        for (const vertex of flowchart.vertices) {
+            let isCommon = false;
+            this.vertices
+                .filter((v) => v.name === vertex.name)
+                .forEach((v) => {
+                v.status = v.hash === vertex.hash ? "identical" : "modified";
+                isCommon = true;
+            });
+            if (!isCommon) {
+                const newVertex = structuredClone(vertex);
+                newVertex.status = "deleted";
+                this.vertices.push(newVertex);
+            }
+        }
+        for (const edge of flowchart.edges) {
+            let isCommon = false;
+            this.edges
+                .filter((e) => e.child === edge.child && e.parent === edge.parent)
+                .forEach((e) => {
+                isCommon = true;
+                e.status = "identical";
+            });
+            if (!isCommon) {
+                const newEdge = structuredClone(edge);
+                newEdge.status = "deleted";
+                this.edges.push(newEdge);
+            }
+        }
+    }
+    plot(entire) {
+        const statements = [];
+        const checksheet = {};
+        this.vertices.forEach((vertex) => {
+            checksheet[vertex.name] = {
+                isUpstream: false,
+                isDownstream: false,
+            };
+        });
+        const markDownstream = (name) => {
+            if (checksheet[name].isDownstream)
+                return;
+            checksheet[name].isDownstream = true;
+            this.edges
+                .filter((edge) => edge.parent === name)
+                .forEach((edge) => markDownstream(edge.child));
+        };
+        const markUpstream = (name) => {
+            if (checksheet[name].isUpstream)
+                return;
+            checksheet[name].isUpstream = true;
+            this.edges
+                .filter((edge) => edge.child === name)
+                .forEach((edge) => markUpstream(edge.parent));
+        };
+        this.vertices.forEach((vertex) => {
+            if (vertex.status === "identical")
+                return;
+            markDownstream(vertex.name);
+            markUpstream(vertex.name);
+        });
+        this.vertices.forEach((vertex) => {
+            if (entire ||
+                checksheet[vertex.name].isDownstream ||
+                checksheet[vertex.name].isUpstream) {
+                statements.push(...vertexStatements(vertex));
+            }
+        });
+        this.edges.forEach((edge, idx) => {
+            if (entire ||
+                checksheet[edge.parent].isDownstream ||
+                checksheet[edge.child].isUpstream) {
+                statements.push(...edgeStatements(edge, idx));
+            }
+        });
+        const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
+        return mermaid;
+    }
+}
+exports.Flowchart = Flowchart;
+function vertexStatements(vertex) {
+    const statements = [];
+    const splited = vertex.name.split(".");
+    const text = splited.slice(2).join(".");
+    const style = ["color:white", "stroke:black"];
+    switch (vertex.type) {
+        case "source":
+            style.push("fill:green");
+            break;
+        case "seed":
+            style.push("fill:blue");
+            break;
+        case "model":
+            style.push("fill:blue");
+            break;
+        case "snapshot":
+            style.push("fill:blue");
+            break;
+        case "exposure":
+            style.push("fill:orange");
+            break;
+        case "analysis":
+            style.push("fill:blue");
+            break;
+        case "test":
+            style.push("fill:blue");
+            break;
+        default:
+            throw "unnexpected resource type";
+    }
+    switch (vertex.status) {
+        case "deleted":
+            style.push("stroke-width:4px");
+            style.push("stroke-dasharray: 5 5");
+            break;
+        case "identical":
+            style.push("stroke-width:0px");
+            break;
+        case "modified":
+            style.push("stroke-width:4px");
+            break;
+        case "new":
+            style.push("stroke-width:4px");
+            break;
+        default:
+            throw "unnexpected resource status";
+    }
+    // NOTE
+    // name may contain special character (e.g. white space)
+    // which is not allowed in flowchart id
+    const id = (0, utils_1.b2a)(vertex.name);
+    statements.push(`${id}("${text}")`);
+    statements.push(`style ${id} ${style.join(",")}`);
+    return statements;
+}
+function edgeStatements(edge, idx) {
+    const statements = [];
+    switch (edge.status) {
+        case "deleted":
+            statements.push(`${(0, utils_1.b2a)(edge.parent)} -.-> ${(0, utils_1.b2a)(edge.child)}`);
+            break;
+        case "identical":
+            statements.push(`${(0, utils_1.b2a)(edge.parent)} --> ${(0, utils_1.b2a)(edge.child)}`);
+            break;
+        case "new":
+            statements.push(`${(0, utils_1.b2a)(edge.parent)} --> ${(0, utils_1.b2a)(edge.child)}`);
+            statements.push(`linkStyle ${idx} stroke-width:4px`);
+            break;
+    }
+    return statements;
+}
+
+
+/***/ }),
+
 /***/ 6144:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -28889,23 +29128,23 @@ const core = __importStar(__nccwpck_require__(2186));
 const process = __importStar(__nccwpck_require__(7282));
 const yaml = __importStar(__nccwpck_require__(1917));
 const utils_1 = __nccwpck_require__(1314);
-const manifest_1 = __nccwpck_require__(1635);
 const types_1 = __nccwpck_require__(5077);
+const flowchart_1 = __nccwpck_require__(3679);
 async function main() {
-    const moveBack = (0, utils_1.moveTo)(core.getInput("dbt-project"));
+    const back = (0, utils_1.go)(core.getInput("dbt-project"));
     await preprocess();
-    const mainManifest = await manifest_1.Manifest.from("./target/manifest.json");
-    moveBack();
-    let anotherManifest;
+    const mainChart = await flowchart_1.Flowchart.from("./target/manifest.json");
+    back();
     const anotherProject = core.getInput("dbt-project-to-compare-with");
     if (anotherProject) {
-        const moveBack = (0, utils_1.moveTo)(anotherProject);
+        const back = (0, utils_1.go)(anotherProject);
         await preprocess();
-        anotherManifest = await manifest_1.Manifest.from("./target/manifest.json");
-        moveBack();
+        const anotherChart = await flowchart_1.Flowchart.from("./target/manifest.json");
+        mainChart.compare(anotherChart);
+        back();
     }
     const drawEntireLineage = core.getInput("draw-entire-lineage").toLowerCase() === "true";
-    const chart = mainManifest.flowchart(drawEntireLineage, anotherManifest);
+    const chart = mainChart.plot(drawEntireLineage);
     const outpath = `${process.cwd()}/lineage.mermaid`;
     await fs.writeFile(outpath, chart);
     core.setOutput("filepath", outpath);
@@ -28953,278 +29192,6 @@ async function preprocess() {
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
     await cleanup();
 }
-
-
-/***/ }),
-
-/***/ 1635:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Manifest = void 0;
-const fs = __importStar(__nccwpck_require__(3292));
-const types_1 = __nccwpck_require__(5077);
-const utils_1 = __nccwpck_require__(1314);
-class Manifest {
-    data;
-    constructor(data) {
-        this.data = data;
-        // TODO
-        // add resource type info
-        // remove unsupported resource type
-        // remove generic test
-        // add ancestors / successors field
-        //
-    }
-    static async from(filepath) {
-        const data = await fs
-            .readFile(filepath)
-            .then((buffer) => String(buffer))
-            .then((json) => JSON.parse(json));
-        return new Manifest(data);
-    }
-    flowchart(entire, another) {
-        const statements = [
-            ...this.vertices(entire, another),
-            ...this.edges(entire, another),
-        ];
-        const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
-        return mermaid;
-    }
-    vertices(entire, another) {
-        const resources = this.resourcesAll(another);
-        const statements = [];
-        const verticesToDraw = this.resourcesToDraw(entire, another);
-        for (const [key, value] of Object.entries(resources)) {
-            const splited = key.split(".");
-            const text = splited.slice(2).join(".");
-            const style = ["color:white", "stroke:black"];
-            const type_ = splited[0];
-            if (!(0, types_1.isSupportedResourceType)(type_)) {
-                continue;
-            }
-            switch (type_) {
-                case "source":
-                    style.push("fill:green");
-                    break;
-                case "seed":
-                    style.push("fill:blue");
-                    break;
-                case "model":
-                    style.push("fill:blue");
-                    break;
-                case "snapshot":
-                    style.push("fill:blue");
-                    break;
-                case "exposure":
-                    style.push("fill:orange");
-                    break;
-                case "analysis":
-                    style.push("fill:blue");
-                    break;
-                case "test":
-                    style.push("fill:blue");
-                    break;
-            }
-            switch (value) {
-                case "deleted":
-                    style.push("stroke-width:4px");
-                    style.push("stroke-dasharray: 5 5");
-                    break;
-                case "identical":
-                    style.push("stroke-width:0px");
-                    break;
-                case "modified":
-                    style.push("stroke-width:4px");
-                    break;
-                case "new":
-                    style.push("stroke-width:4px");
-                    break;
-            }
-            if (!verticesToDraw.has(key)) {
-                continue;
-            }
-            // NOTE
-            // name may contain special character (e.g. white space)
-            // which is not allowed in flowchart id
-            const id = (0, utils_1.b2a)(key);
-            statements.push(`${id}("${text}")`);
-            statements.push(`style ${id} ${style.join(",")}`);
-        }
-        return statements;
-    }
-    edges(entire, another) {
-        const mappings = {};
-        for (const [parent, children] of Object.entries(this.data.child_map)) {
-            for (const child of children) {
-                // since base64 does not use `|`
-                // it is a good separator
-                mappings[`${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`] = "identical";
-            }
-        }
-        if (another) {
-            for (const key of Object.keys(mappings)) {
-                mappings[key] = "new";
-            }
-            for (const [parent, children] of Object.entries(another.data.child_map)) {
-                for (const child of children) {
-                    const key = `${(0, utils_1.b2a)(parent)}|${(0, utils_1.b2a)(child)}`;
-                    mappings[key] = key in mappings ? "identical" : "deleted";
-                }
-            }
-        }
-        const statements = [];
-        const verticesToDraw = this.resourcesToDraw(entire, another);
-        let idx = 0;
-        for (const [key, value] of Object.entries(mappings)) {
-            const [parent, child] = key.split("|");
-            if (!verticesToDraw.has((0, utils_1.a2b)(parent)) || !verticesToDraw.has((0, utils_1.a2b)(child))) {
-                continue;
-            }
-            switch (value) {
-                case "deleted":
-                    statements.push(`${parent} -.-> ${child}`);
-                    break;
-                case "identical":
-                    statements.push(`${parent} --> ${child}`);
-                    break;
-                case "new":
-                    statements.push(`${parent} --> ${child}`);
-                    statements.push(`linkStyle ${idx} stroke-width:4px`);
-                    break;
-            }
-            idx++;
-        }
-        return statements;
-    }
-    resourcesAll(another) {
-        const resources = {};
-        for (const [key, value] of Object.entries({
-            ...this.data.sources,
-            ...this.data.nodes,
-            ...this.data.exposures,
-        })) {
-            if ((0, types_1.isNode)(value) && !value.checksum.checksum)
-                continue; // generic test
-            resources[key] = "identical";
-        }
-        if (another) {
-            for (const key of Object.keys(resources)) {
-                resources[key] = "new";
-            }
-            for (const [key, value] of Object.entries({
-                ...another.data.sources,
-                ...another.data.nodes,
-                ...another.data.exposures,
-            })) {
-                if (key in resources) {
-                    if ((0, types_1.isNode)(value)) {
-                        const mainHash = this.data.nodes[key].checksum.checksum;
-                        const anotherHash = value.checksum.checksum;
-                        resources[key] =
-                            mainHash === anotherHash ? "identical" : "modified";
-                    }
-                    else {
-                        resources[key] = "identical";
-                    }
-                }
-                else {
-                    if ((0, types_1.isNode)(value) && !value.checksum.checksum)
-                        continue; // generic test
-                    resources[key] = "deleted";
-                }
-            }
-        }
-        return resources;
-    }
-    resourcesToDraw(entire, another) {
-        const resources = this.resourcesAll(another);
-        if (entire || !another) {
-            const set = new Set(Object.keys(resources));
-            // ignore not supported resource types (e.g. metrics)
-            const temp = [...set].filter((resource) => {
-                const splited = resource.split(".");
-                const type_ = splited[0];
-                return types_1.supportedResourceTypes.some((t) => t === type_);
-            });
-            return new Set(temp);
-        }
-        const set = new Set();
-        const addSuccessors = (child, manifest) => {
-            if (!(child in resources))
-                return;
-            set.add(child);
-            if (child in manifest.child_map) {
-                const children = manifest.child_map[child];
-                children.forEach((c) => {
-                    addSuccessors(c, manifest);
-                });
-            }
-        };
-        const addAncestors = (parent, manifest) => {
-            if (!(parent in resources))
-                return;
-            set.add(parent);
-            if (parent in manifest.parent_map) {
-                const parents = manifest.parent_map[parent];
-                parents.forEach((p) => {
-                    addSuccessors(p, manifest);
-                });
-            }
-        };
-        for (const manifest of [this.data, another.data]) {
-            for (const [parent, children] of Object.entries(manifest.child_map)) {
-                for (const child of children) {
-                    if (resources[parent] && resources[parent] !== "identical") {
-                        set.add(parent);
-                        addSuccessors(child, manifest);
-                    }
-                }
-            }
-            for (const [child, parents] of Object.entries(manifest.parent_map)) {
-                for (const parent of parents) {
-                    if (resources[parent] && resources[child] !== "identical") {
-                        set.add(child);
-                        addAncestors(parent, manifest);
-                    }
-                }
-            }
-        }
-        // ignore not supported resource types (e.g. metrics)
-        const temp = [...set].filter((resource) => {
-            const splited = resource.split(".");
-            const type_ = splited[0];
-            return types_1.supportedResourceTypes.some((t) => t === type_);
-        });
-        return new Set(temp);
-    }
-}
-exports.Manifest = Manifest;
 
 
 /***/ }),
@@ -29293,7 +29260,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.moveTo = exports.a2b = exports.b2a = exports.exec = void 0;
+exports.go = exports.a2b = exports.b2a = exports.exec = void 0;
 const node_util_1 = __importDefault(__nccwpck_require__(7261));
 const child_process = __importStar(__nccwpck_require__(2081));
 const process = __importStar(__nccwpck_require__(7282));
@@ -29312,12 +29279,12 @@ function a2b(b64) {
     return decodeURIComponent(atob(str));
 }
 exports.a2b = a2b;
-function moveTo(path) {
+function go(path) {
     const curr = process.cwd();
     process.chdir(path);
     return () => process.chdir(curr);
 }
-exports.moveTo = moveTo;
+exports.go = go;
 
 
 /***/ }),

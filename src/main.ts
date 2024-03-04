@@ -2,27 +2,27 @@ import * as fs from "fs/promises";
 import * as core from "@actions/core";
 import * as process from "process";
 import * as yaml from "js-yaml";
-import { exec, moveTo } from "./utils";
-import { Manifest } from "./manifest";
+import { exec, go } from "./utils";
 import { isDBTProjectYml } from "./types";
+import { Flowchart } from "./flowchart";
 
 export async function main() {
-  const moveBack = moveTo(core.getInput("dbt-project"));
+  const back = go(core.getInput("dbt-project"));
   await preprocess();
-  const mainManifest = await Manifest.from("./target/manifest.json");
-  moveBack();
+  const mainChart = await Flowchart.from("./target/manifest.json");
+  back();
 
-  let anotherManifest;
   const anotherProject = core.getInput("dbt-project-to-compare-with");
   if (anotherProject) {
-    const moveBack = moveTo(anotherProject);
+    const back = go(anotherProject);
     await preprocess();
-    anotherManifest = await Manifest.from("./target/manifest.json");
-    moveBack();
+    const anotherChart = await Flowchart.from("./target/manifest.json");
+    mainChart.compare(anotherChart);
+    back();
   }
   const drawEntireLineage =
     core.getInput("draw-entire-lineage").toLowerCase() === "true";
-  const chart = mainManifest.flowchart(drawEntireLineage, anotherManifest);
+  const chart = mainChart.plot(drawEntireLineage);
   const outpath = `${process.cwd()}/lineage.mermaid`;
   await fs.writeFile(outpath, chart);
   core.setOutput("filepath", outpath);

@@ -27,7 +27,6 @@ export function isSupportedResourceType(s: string): s is SupportedResourceType {
 
 export type ManifestData = {
   child_map: { [key: string]: string[] };
-  parent_map: { [key: string]: string[] }; // TODO remove
   sources: { [key: string]: Source };
   nodes: { [key: string]: Node };
   exposures: { [key: string]: Exposure };
