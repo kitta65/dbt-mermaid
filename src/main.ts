@@ -30,7 +30,7 @@ export async function main() {
 
 function dummyProfile(profile: string) {
   return {
-    dbt_mermaid: {
+    [profile]: {
       target: "dev",
       outputs: {
         dev: {
