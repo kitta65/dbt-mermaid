@@ -252,14 +252,23 @@ describe("flowchart", () => {
   });
 
   test("ignore generic test", () => {
+    const model = "model.project.name";
+    const test = "test.project.name";
     const flowchart = new Flowchart({
       sources: {},
-      nodes: { "test.project.name": { checksum: { checksum: "" } } },
+      nodes: {
+        [model]: { checksum: { checksum: "anyvalue" } },
+        [test]: { checksum: { checksum: "" } },
+      },
       exposures: {},
-      child_map: {},
+      child_map: {
+        [model]: [test],
+      },
     });
     const actual = flowchart.plot(true);
     const expected = `flowchart LR
+  ${b2a(model)}("name");
+  style ${b2a(model)} color:white,stroke:black,fill:blue,stroke-width:0px;
 `;
     expect(actual).toBe(expected);
   });

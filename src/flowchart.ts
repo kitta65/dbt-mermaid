@@ -48,8 +48,11 @@ export class Flowchart {
     this.edges = [];
     for (const [parent, children] of Object.entries(manifest.child_map)) {
       for (const child of children) {
-        if (this.vertices.every((v) => v.name === child)) continue;
-        if (this.vertices.every((v) => v.name === parent)) continue;
+        if (
+          this.vertices.every((v) => v.name !== child) ||
+          this.vertices.every((v) => v.name !== parent)
+        )
+          continue;
         this.edges.push({ parent, child, status: "identical" });
       }
     }
