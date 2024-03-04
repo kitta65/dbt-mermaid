@@ -2,60 +2,6 @@ import { Manifest } from "./manifest";
 import { b2a } from "./utils";
 
 describe("flowchart", () => {
-  test("draw entire flowchart with another manifest", () => {
-    const a = "source.project.a.a";
-    const b = "model.project.b";
-    const c = "exposure.project.c";
-    const d = "exposure.project.d";
-    const originalManifest = new Manifest({
-      sources: {
-        [a]: {},
-      },
-      nodes: {
-        [b]: { checksum: { checksum: "original hash" } },
-      },
-      exposures: {
-        [c]: {},
-      },
-      child_map: {
-        [a]: [b],
-        [b]: [c],
-      },
-      parent_map: {}, // not needed when drawing entire lineage
-    });
-    const modifiedManifest = new Manifest({
-      sources: {
-        [a]: {},
-      },
-      nodes: {
-        [b]: { checksum: { checksum: "modified hash" } },
-      },
-      exposures: {
-        [d]: {},
-      },
-      child_map: {
-        [a]: [b],
-        [b]: [d],
-      },
-      parent_map: {}, // not needed when drawing entire lineage
-    });
-    const actual = modifiedManifest.flowchart(true, originalManifest);
-    const expected = `flowchart LR
-  ${b2a(a)}("a.a");
-  style ${b2a(a)} color:white,stroke:black,fill:green,stroke-width:0px;
-  ${b2a(b)}("b");
-  style ${b2a(b)} color:white,stroke:black,fill:blue,stroke-width:4px;
-  ${b2a(d)}("d");
-  style ${b2a(d)} color:white,stroke:black,fill:orange,stroke-width:4px;
-  ${b2a(c)}("c");
-  style ${b2a(c)} color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
-  ${b2a(a)} --> ${b2a(b)};
-  ${b2a(b)} --> ${b2a(d)};
-  linkStyle 1 stroke-width:4px;
-  ${b2a(b)} -.-> ${b2a(c)};
-`;
-    expect(actual).toBe(expected);
-  });
   test("draw partial flowchart with another manifest", () => {
     const a1 = "source.p.a1";
     const b1 = "source.p.b1";

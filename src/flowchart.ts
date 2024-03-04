@@ -12,6 +12,7 @@ type Vertex = {
   name: string;
   type: SupportedResourceType;
   status: Status;
+  hash: String;
 };
 
 type Edge = {
@@ -36,7 +37,12 @@ export class Flowchart {
       if (!isSupportedResourceType(type_)) continue;
       // ignore generic test
       if (isNode(value) && value.checksum.checksum === "") continue;
-      this.vertices.push({ name: key, type: type_, status: "identical" });
+      this.vertices.push({
+        name: key,
+        type: type_,
+        status: "identical",
+        hash: isNode(value) ? value.checksum.checksum : "",
+      });
     }
 
     this.edges = [];
@@ -55,6 +61,45 @@ export class Flowchart {
       .then((buffer) => String(buffer))
       .then((json) => JSON.parse(json));
     return new Flowchart(manifest);
+  }
+
+  compare(flowchart: Flowchart) {
+    for (const vertex of this.vertices) {
+      vertex.status = "new";
+    }
+    for (const edge of this.edges) {
+      edge.status = "new";
+    }
+
+    for (const vertex of flowchart.vertices) {
+      let isCommon = false;
+      this.vertices
+        .filter((v) => v.name === vertex.name)
+        .forEach((v) => {
+          v.status = v.hash === vertex.hash ? "identical" : "modified";
+          isCommon = true;
+        });
+      if (!isCommon) {
+        const newVertex = structuredClone(vertex);
+        newVertex.status = "deleted";
+        this.vertices.push(newVertex);
+      }
+    }
+
+    for (const edge of flowchart.edges) {
+      let isCommon = false;
+      this.edges
+        .filter((e) => e.child === edge.child && e.parent === edge.parent)
+        .forEach((e) => {
+          isCommon = true;
+          e.status = "identical";
+        });
+      if (!isCommon) {
+        const newEdge = structuredClone(edge);
+        newEdge.status = "deleted";
+        this.edges.push(newEdge);
+      }
+    }
   }
 
   plot() {
