@@ -7,7 +7,7 @@
   "scripts": {
     "build": "ncc build src/index.ts --license licenses.txt",
     "format": "prettier . --write && pipx run --spec shandy-sqlfmt[jinjafmt] sqlfmt ./project/**/*.sql",
-    "test": "eslint && jest"
+    "test": "eslint . && jest"
   },
   "keywords": [],
   "exports": {
