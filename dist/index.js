@@ -28842,10 +28842,37 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Flowchart = void 0;
+exports.Flowchart = exports.generateClassDefStatements = void 0;
 const fs = __importStar(__nccwpck_require__(3292));
 const types_1 = __nccwpck_require__(5077);
 const utils_1 = __nccwpck_require__(1314);
+const classColors = ["green", "blue", "orange"];
+const classStyles = ["Normal", "Bold", "Dash"];
+function generateClassDefStatements() {
+    const statements = [];
+    for (const color of classColors) {
+        for (const style of classStyles) {
+            const stroke = [];
+            switch (style) {
+                case "Normal":
+                    stroke.push("stroke-width:0px");
+                    break;
+                case "Bold":
+                    stroke.push("stroke-width:4px");
+                    break;
+                case "Dash":
+                    stroke.push("stroke-width:4px");
+                    stroke.push("stroke-dasharray: 5 5");
+                    break;
+                default:
+                    throw "unnexpected style";
+            }
+            statements.push(`classDef ${color}${style} color:white,stroke:black,fill:${color},${stroke.join(",")}`);
+        }
+    }
+    return statements;
+}
+exports.generateClassDefStatements = generateClassDefStatements;
 class Flowchart {
     manifest;
     vertices;
@@ -28926,8 +28953,8 @@ class Flowchart {
             }
         }
     }
-    plot(entire) {
-        const statements = [];
+    plot(entire, shouldHash = false) {
+        const statements = generateClassDefStatements();
         const checksheet = {};
         this.vertices.forEach((vertex) => {
             checksheet[vertex.name] = {
@@ -28961,14 +28988,14 @@ class Flowchart {
             if (entire ||
                 checksheet[vertex.name].isDownstream ||
                 checksheet[vertex.name].isUpstream) {
-                statements.push(...vertexStatements(vertex));
+                statements.push(vertexStatement(vertex, shouldHash));
             }
         });
-        this.edges.forEach((edge, idx) => {
+        this.edges.forEach((edge) => {
             if (entire ||
                 checksheet[edge.parent].isDownstream ||
                 checksheet[edge.child].isUpstream) {
-                statements.push(...edgeStatements(edge, idx));
+                statements.push(edgeStatement(edge, shouldHash));
             }
         });
         const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
@@ -28976,76 +29003,73 @@ class Flowchart {
     }
 }
 exports.Flowchart = Flowchart;
-function vertexStatements(vertex) {
-    const statements = [];
+function vertexStatement(vertex, shouldHash) {
     const splited = vertex.name.split(".");
     const text = splited.slice(2).join(".");
-    const style = ["color:white", "stroke:black"];
+    let color;
     switch (vertex.type) {
         case "source":
-            style.push("fill:green");
+            color = "green";
             break;
         case "seed":
-            style.push("fill:blue");
+            color = "blue";
             break;
         case "model":
-            style.push("fill:blue");
+            color = "blue";
             break;
         case "snapshot":
-            style.push("fill:blue");
+            color = "blue";
             break;
         case "exposure":
-            style.push("fill:orange");
+            color = "orange";
             break;
         case "analysis":
-            style.push("fill:blue");
+            color = "blue";
             break;
         case "test":
-            style.push("fill:blue");
+            color = "blue";
             break;
         default:
             throw "unnexpected resource type";
     }
+    let style;
     switch (vertex.status) {
         case "deleted":
-            style.push("stroke-width:4px");
-            style.push("stroke-dasharray: 5 5");
+            style = "Dash";
             break;
         case "identical":
-            style.push("stroke-width:0px");
+            style = "Normal";
             break;
         case "modified":
-            style.push("stroke-width:4px");
+            style = "Bold";
             break;
         case "new":
-            style.push("stroke-width:4px");
+            style = "Bold";
             break;
         default:
             throw "unnexpected resource status";
     }
-    // NOTE
-    // name may contain special character (e.g. white space)
-    // which is not allowed in flowchart id
-    const id = (0, utils_1.b2a)(vertex.name);
-    statements.push(`${id}("${text}")`);
-    statements.push(`style ${id} ${style.join(",")}`);
-    return statements;
+    const id = (0, utils_1.hash)(vertex.name, shouldHash);
+    return `${id}("${text}"):::${color}${style}`;
 }
-function edgeStatements(edge, idx) {
-    const statements = [];
+function edgeStatement(edge, shouldHash) {
+    const parent = (0, utils_1.hash)(edge.parent, shouldHash);
+    const child = (0, utils_1.hash)(edge.child, shouldHash);
+    let statement;
     switch (edge.status) {
         case "deleted":
-            statements.push(`${(0, utils_1.b2a)(edge.parent)} -.-> ${(0, utils_1.b2a)(edge.child)}`);
+            statement = `${parent} -.-> ${child}`;
             break;
         case "identical":
-            statements.push(`${(0, utils_1.b2a)(edge.parent)} --> ${(0, utils_1.b2a)(edge.child)}`);
+            statement = `${parent} --> ${child}`;
             break;
         case "new":
-            statements.push(`${(0, utils_1.b2a)(edge.parent)} --> ${(0, utils_1.b2a)(edge.child)}`);
-            statements.push(`linkStyle ${idx} stroke-width:4px`);
+            statement = `${parent} ==> ${child}`;
             break;
+        default:
+            throw "unnexpected status";
     }
-    return statements;
+    return statement;
 }
 
 
@@ -29143,7 +29167,8 @@ async function main() {
         back();
     }
     const drawEntireLineage = core.getInput("draw-entire-lineage").toLowerCase() === "true";
-    const chart = mainChart.plot(drawEntireLineage);
+    const saveTextSize = core.getInput("save-text-size").toLocaleLowerCase() === "true";
+    const chart = mainChart.plot(drawEntireLineage, saveTextSize);
     const outpath = `${process.cwd()}/lineage.mermaid`;
     await fs.writeFile(outpath, chart);
     core.setOutput("filepath", outpath);
@@ -29259,25 +29284,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.go = exports.a2b = exports.b2a = exports.exec = void 0;
+exports.go = exports.hash = exports.exec = void 0;
 const node_util_1 = __importDefault(__nccwpck_require__(7261));
+const crypto = __importStar(__nccwpck_require__(6113));
 const child_process = __importStar(__nccwpck_require__(2081));
 const process = __importStar(__nccwpck_require__(7282));
 exports.exec = node_util_1.default.promisify(child_process.exec);
-function b2a(str) {
-    const b64 = btoa(encodeURIComponent(str))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "");
-    return b64;
+function hash(text, shouldHash = false) {
+    if (shouldHash) {
+        return crypto.createHash("sha1").update(text).digest("hex").slice(0, 8);
+    }
+    return text;
 }
-exports.b2a = b2a;
-function a2b(b64) {
-    // it seems that padding (=) is not needed
-    const str = b64.replace(/-/g, "+").replace(/_/g, "\\");
-    return decodeURIComponent(atob(str));
-}
-exports.a2b = a2b;
+exports.hash = hash;
 function go(path) {
     const curr = process.cwd();
     process.chdir(path);

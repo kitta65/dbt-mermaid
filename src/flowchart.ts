@@ -6,7 +6,7 @@ import {
   isSupportedResourceType,
   isNode,
 } from "./types";
-import { b2a } from "./utils";
+import { hash } from "./utils";
 
 type Vertex = {
   name: string;
@@ -20,6 +20,38 @@ type Edge = {
   child: string;
   status: Status;
 };
+
+const classColors = ["green", "blue", "orange"] as const;
+type ClassColor = (typeof classColors)[number];
+const classStyles = ["Normal", "Bold", "Dash"] as const;
+type ClassStyle = (typeof classStyles)[number];
+
+export function generateClassDefStatements() {
+  const statements: string[] = [];
+  for (const color of classColors) {
+    for (const style of classStyles) {
+      const stroke = [];
+      switch (style) {
+        case "Normal":
+          stroke.push("stroke-width:0px");
+          break;
+        case "Bold":
+          stroke.push("stroke-width:4px");
+          break;
+        case "Dash":
+          stroke.push("stroke-width:4px");
+          stroke.push("stroke-dasharray: 5 5");
+          break;
+        default:
+          throw "unnexpected style";
+      }
+      statements.push(
+        `classDef ${color}${style} color:white,stroke:black,fill:${color},${stroke.join(",")}`,
+      );
+    }
+  }
+  return statements;
+}
 
 export class Flowchart {
   private vertices: Vertex[];
@@ -105,8 +137,8 @@ export class Flowchart {
     }
   }
 
-  plot(entire: boolean) {
-    const statements: string[] = [];
+  plot(entire: boolean, shouldHash: boolean = false) {
+    const statements = generateClassDefStatements();
     const checksheet: {
       [key: string]: {
         isUpstream: boolean;
@@ -145,16 +177,16 @@ export class Flowchart {
         checksheet[vertex.name].isDownstream ||
         checksheet[vertex.name].isUpstream
       ) {
-        statements.push(...vertexStatements(vertex));
+        statements.push(vertexStatement(vertex, shouldHash));
       }
     });
-    this.edges.forEach((edge, idx) => {
+    this.edges.forEach((edge) => {
       if (
         entire ||
         checksheet[edge.parent].isDownstream ||
         checksheet[edge.child].isUpstream
       ) {
-        statements.push(...edgeStatements(edge, idx));
+        statements.push(edgeStatement(edge, shouldHash));
       }
     });
 
@@ -164,75 +196,72 @@ export class Flowchart {
   }
 }
 
-function vertexStatements(vertex: Vertex) {
-  const statements = [];
+function vertexStatement(vertex: Vertex, shouldHash: boolean) {
   const splited = vertex.name.split(".");
   const text = splited.slice(2).join(".");
-  const style: string[] = ["color:white", "stroke:black"];
+  let color: ClassColor;
   switch (vertex.type) {
     case "source":
-      style.push("fill:green");
+      color = "green";
       break;
     case "seed":
-      style.push("fill:blue");
+      color = "blue";
       break;
     case "model":
-      style.push("fill:blue");
+      color = "blue";
       break;
     case "snapshot":
-      style.push("fill:blue");
+      color = "blue";
       break;
     case "exposure":
-      style.push("fill:orange");
+      color = "orange";
       break;
     case "analysis":
-      style.push("fill:blue");
+      color = "blue";
       break;
     case "test":
-      style.push("fill:blue");
+      color = "blue";
       break;
     default:
       throw "unnexpected resource type";
   }
+  let style: ClassStyle;
   switch (vertex.status) {
     case "deleted":
-      style.push("stroke-width:4px");
-      style.push("stroke-dasharray: 5 5");
+      style = "Dash";
       break;
     case "identical":
-      style.push("stroke-width:0px");
+      style = "Normal";
       break;
     case "modified":
-      style.push("stroke-width:4px");
+      style = "Bold";
       break;
     case "new":
-      style.push("stroke-width:4px");
+      style = "Bold";
       break;
     default:
       throw "unnexpected resource status";
   }
-  // NOTE
-  // name may contain special character (e.g. white space)
-  // which is not allowed in flowchart id
-  const id = b2a(vertex.name);
-  statements.push(`${id}("${text}")`);
-  statements.push(`style ${id} ${style.join(",")}`);
-  return statements;
+  const id = hash(vertex.name, shouldHash);
+  return `${id}("${text}"):::${color}${style}`;
 }
 
-function edgeStatements(edge: Edge, idx: number) {
-  const statements: string[] = [];
+function edgeStatement(edge: Edge, shouldHash: boolean) {
+  const parent = hash(edge.parent, shouldHash);
+  const child = hash(edge.child, shouldHash);
+  let statement: string;
   switch (edge.status) {
     case "deleted":
-      statements.push(`${b2a(edge.parent)} -.-> ${b2a(edge.child)}`);
+      statement = `${parent} -.-> ${child}`;
       break;
     case "identical":
-      statements.push(`${b2a(edge.parent)} --> ${b2a(edge.child)}`);
+      statement = `${parent} --> ${child}`;
       break;
     case "new":
-      statements.push(`${b2a(edge.parent)} --> ${b2a(edge.child)}`);
-      statements.push(`linkStyle ${idx} stroke-width:4px`);
+      statement = `${parent} ==> ${child}`;
       break;
+    default:
+      throw "unnexpected status";
   }
-  return statements;
+  return statement;
 }

@@ -1,18 +1,8 @@
-import { a2b, b2a } from "./utils";
+import { hash } from "./utils";
 
-describe("a2b b2a", () => {
+describe("hash", () => {
   test("simple alphabet", () => {
     const input = "abc";
-    expect(a2b(b2a(input))).toBe(input);
-  });
-
-  test("symbols", () => {
-    const input = ". ";
-    expect(a2b(b2a(input))).toBe(input);
-  });
-
-  test("kana", () => {
-    const input = "あいう";
-    expect(a2b(b2a(input))).toBe(input);
+    expect(hash(input, true)).toBe("a9993e36");
   });
 });

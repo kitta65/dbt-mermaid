@@ -22,7 +22,9 @@ export async function main() {
   }
   const drawEntireLineage =
     core.getInput("draw-entire-lineage").toLowerCase() === "true";
-  const chart = mainChart.plot(drawEntireLineage);
+  const saveTextSize =
+    core.getInput("save-text-size").toLocaleLowerCase() === "true";
+  const chart = mainChart.plot(drawEntireLineage, saveTextSize);
   const outpath = `${process.cwd()}/lineage.mermaid`;
   await fs.writeFile(outpath, chart);
   core.setOutput("filepath", outpath);
