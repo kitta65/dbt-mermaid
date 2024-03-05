@@ -11,4 +11,4 @@ exposures:
     owner:
       email: dbt.mermaid@example.com
     depends_on:
-      - ref("sessions")
+      - ref("sessions2")
