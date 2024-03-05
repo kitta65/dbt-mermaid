@@ -1,6 +1,5 @@
 on:
   push:
-    paths: "project/**"
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -11,7 +10,7 @@ jobs:
         with:
           dbt-version: 1.7
           dbt-project: project
-          draw-entire-lineage: false
+          save-text-size: true
       - uses: actions/upload-artifact@v4
         with:
           path: ${{ steps.dbt-mermaid.outputs.filepath }}
