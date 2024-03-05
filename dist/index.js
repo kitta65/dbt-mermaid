@@ -28964,11 +28964,11 @@ class Flowchart {
                 statements.push(...vertexStatements(vertex));
             }
         });
-        this.edges.forEach((edge, idx) => {
+        this.edges.forEach((edge) => {
             if (entire ||
                 checksheet[edge.parent].isDownstream ||
                 checksheet[edge.child].isUpstream) {
-                statements.push(...edgeStatements(edge, idx));
+                statements.push(...edgeStatements(edge));
             }
         });
         const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
@@ -29031,7 +29031,7 @@ function vertexStatements(vertex) {
     statements.push(`style ${id} ${style.join(",")}`);
     return statements;
 }
-function edgeStatements(edge, idx) {
+function edgeStatements(edge) {
     const statements = [];
     switch (edge.status) {
         case "deleted":
@@ -29041,8 +29041,7 @@ function edgeStatements(edge, idx) {
             statements.push(`${(0, utils_1.b2a)(edge.parent)} --> ${(0, utils_1.b2a)(edge.child)}`);
             break;
         case "new":
-            statements.push(`${(0, utils_1.b2a)(edge.parent)} --> ${(0, utils_1.b2a)(edge.child)}`);
-            statements.push(`linkStyle ${idx} stroke-width:4px`);
+            statements.push(`${(0, utils_1.b2a)(edge.parent)} ==> ${(0, utils_1.b2a)(edge.child)}`);
             break;
     }
     return statements;

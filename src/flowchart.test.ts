@@ -155,8 +155,7 @@ describe("flowchart", () => {
   ${b2a(c)}("c");
   style ${b2a(c)} color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
   ${b2a(a)} --> ${b2a(b)};
-  ${b2a(b)} --> ${b2a(d)};
-  linkStyle 1 stroke-width:4px;
+  ${b2a(b)} ==> ${b2a(d)};
   ${b2a(b)} -.-> ${b2a(c)};
 `;
     expect(actual).toBe(expected);

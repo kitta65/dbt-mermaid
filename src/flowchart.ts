@@ -148,13 +148,13 @@ export class Flowchart {
         statements.push(...vertexStatements(vertex));
       }
     });
-    this.edges.forEach((edge, idx) => {
+    this.edges.forEach((edge) => {
       if (
         entire ||
         checksheet[edge.parent].isDownstream ||
         checksheet[edge.child].isUpstream
       ) {
-        statements.push(...edgeStatements(edge, idx));
+        statements.push(...edgeStatements(edge));
       }
     });
 
@@ -220,7 +220,7 @@ function vertexStatements(vertex: Vertex) {
   return statements;
 }
 
-function edgeStatements(edge: Edge, idx: number) {
+function edgeStatements(edge: Edge) {
   const statements: string[] = [];
   switch (edge.status) {
     case "deleted":
@@ -230,8 +230,7 @@ function edgeStatements(edge: Edge, idx: number) {
       statements.push(`${b2a(edge.parent)} --> ${b2a(edge.child)}`);
       break;
     case "new":
-      statements.push(`${b2a(edge.parent)} --> ${b2a(edge.child)}`);
-      statements.push(`linkStyle ${idx} stroke-width:4px`);
+      statements.push(`${b2a(edge.parent)} ==> ${b2a(edge.child)}`);
       break;
   }
   return statements;
