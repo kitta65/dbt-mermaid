@@ -16,7 +16,7 @@ jobs:
           dbt-version: 1.7
           dbt-project: project
           dbt-project-to-compare-with: base/project
-          draw-entire-lineage: false
+          draw-entire-lineage: true
       - name: format comment message
         run: |
           comment_file=/tmp/comment.md
