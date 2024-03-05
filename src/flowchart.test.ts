@@ -1,5 +1,5 @@
 import { Flowchart } from "./flowchart";
-import { b2a } from "./utils";
+import { hash } from "./utils";
 
 describe("flowchart", () => {
   test("draw empty flowchart", () => {
@@ -33,12 +33,12 @@ describe("flowchart", () => {
     });
     const actual = flowchart.plot(true);
     const expected = `flowchart LR
-  ${b2a(a)}("a");
-  style ${b2a(a)} color:white,stroke:black,fill:green,stroke-width:0px;
-  ${b2a(b)}("b");
-  style ${b2a(b)} color:white,stroke:black,fill:blue,stroke-width:0px;
-  ${b2a(c)}("c");
-  style ${b2a(c)} color:white,stroke:black,fill:orange,stroke-width:0px;
+  ${hash(a)}("a");
+  style ${hash(a)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${hash(b)}("b");
+  style ${hash(b)} color:white,stroke:black,fill:blue,stroke-width:0px;
+  ${hash(c)}("c");
+  style ${hash(c)} color:white,stroke:black,fill:orange,stroke-width:0px;
 `;
     expect(actual).toBe(expected);
   });
@@ -60,11 +60,11 @@ describe("flowchart", () => {
     });
     const actual = flowchart.plot(true);
     const expected = `flowchart LR
-  ${b2a(a)}("a");
-  style ${b2a(a)} color:white,stroke:black,fill:green,stroke-width:0px;
-  ${b2a(b)}("b");
-  style ${b2a(b)} color:white,stroke:black,fill:blue,stroke-width:0px;
-  ${b2a(a)} --> ${b2a(b)};
+  ${hash(a)}("a");
+  style ${hash(a)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${hash(b)}("b");
+  style ${hash(b)} color:white,stroke:black,fill:blue,stroke-width:0px;
+  ${hash(a)} --> ${hash(b)};
 `;
     expect(actual).toBe(expected);
   });
@@ -99,11 +99,11 @@ describe("flowchart", () => {
     modified.compare(original);
     const actual = modified.plot(true);
     const expected = `flowchart LR
-  ${b2a(a)}("a");
-  style ${b2a(a)} color:white,stroke:black,fill:green,stroke-width:0px;
-  ${b2a(b)}("b");
-  style ${b2a(b)} color:white,stroke:black,fill:blue,stroke-width:0px;
-  ${b2a(a)} --> ${b2a(b)};
+  ${hash(a)}("a");
+  style ${hash(a)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${hash(b)}("b");
+  style ${hash(b)} color:white,stroke:black,fill:blue,stroke-width:0px;
+  ${hash(a)} --> ${hash(b)};
 `;
     expect(actual).toBe(expected);
   });
@@ -146,17 +146,17 @@ describe("flowchart", () => {
     modified.compare(original);
     const actual = modified.plot(true);
     const expected = `flowchart LR
-  ${b2a(a)}("a.a");
-  style ${b2a(a)} color:white,stroke:black,fill:green,stroke-width:0px;
-  ${b2a(b)}("b");
-  style ${b2a(b)} color:white,stroke:black,fill:blue,stroke-width:4px;
-  ${b2a(d)}("d");
-  style ${b2a(d)} color:white,stroke:black,fill:orange,stroke-width:4px;
-  ${b2a(c)}("c");
-  style ${b2a(c)} color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
-  ${b2a(a)} --> ${b2a(b)};
-  ${b2a(b)} ==> ${b2a(d)};
-  ${b2a(b)} -.-> ${b2a(c)};
+  ${hash(a)}("a.a");
+  style ${hash(a)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${hash(b)}("b");
+  style ${hash(b)} color:white,stroke:black,fill:blue,stroke-width:4px;
+  ${hash(d)}("d");
+  style ${hash(d)} color:white,stroke:black,fill:orange,stroke-width:4px;
+  ${hash(c)}("c");
+  style ${hash(c)} color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
+  ${hash(a)} --> ${hash(b)};
+  ${hash(b)} ==> ${hash(d)};
+  ${hash(b)} -.-> ${hash(c)};
 `;
     expect(actual).toBe(expected);
   });
@@ -219,20 +219,20 @@ describe("flowchart", () => {
 
     const actual = modifiedChart.plot(false);
     const expected = `flowchart LR
-  ${b2a(a1)}("a1");
-  style ${b2a(a1)} color:white,stroke:black,fill:green,stroke-width:0px;
-  ${b2a(b1)}("b1");
-  style ${b2a(b1)} color:white,stroke:black,fill:green,stroke-width:0px;
-  ${b2a(c1)}("c1");
-  style ${b2a(c1)} color:white,stroke:black,fill:blue,stroke-width:4px;
-  ${b2a(d1)}("d1");
-  style ${b2a(d1)} color:white,stroke:black,fill:blue,stroke-width:0px;
-  ${b2a(e1)}("e1");
-  style ${b2a(e1)} color:white,stroke:black,fill:orange,stroke-width:0px;
-  ${b2a(a1)} --> ${b2a(b1)};
-  ${b2a(b1)} --> ${b2a(c1)};
-  ${b2a(c1)} --> ${b2a(d1)};
-  ${b2a(d1)} --> ${b2a(e1)};
+  ${hash(a1)}("a1");
+  style ${hash(a1)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${hash(b1)}("b1");
+  style ${hash(b1)} color:white,stroke:black,fill:green,stroke-width:0px;
+  ${hash(c1)}("c1");
+  style ${hash(c1)} color:white,stroke:black,fill:blue,stroke-width:4px;
+  ${hash(d1)}("d1");
+  style ${hash(d1)} color:white,stroke:black,fill:blue,stroke-width:0px;
+  ${hash(e1)}("e1");
+  style ${hash(e1)} color:white,stroke:black,fill:orange,stroke-width:0px;
+  ${hash(a1)} --> ${hash(b1)};
+  ${hash(b1)} --> ${hash(c1)};
+  ${hash(c1)} --> ${hash(d1)};
+  ${hash(d1)} --> ${hash(e1)};
 `;
     expect(actual).toBe(expected);
   });
@@ -266,8 +266,8 @@ describe("flowchart", () => {
     });
     const actual = flowchart.plot(true);
     const expected = `flowchart LR
-  ${b2a(model)}("name");
-  style ${b2a(model)} color:white,stroke:black,fill:blue,stroke-width:0px;
+  ${hash(model)}("name");
+  style ${hash(model)} color:white,stroke:black,fill:blue,stroke-width:0px;
 `;
     expect(actual).toBe(expected);
   });

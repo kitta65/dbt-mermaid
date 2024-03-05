@@ -18,6 +18,10 @@ inputs:
       (ignored when dbt-project-to-compare is not specified)
     required: true
     default: true
+  save-text-size:
+    description: "if true, replace dbt resource name with short hash to save text size"
+    required: true
+    default: false
 
 outputs:
   filepath:

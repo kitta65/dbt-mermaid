@@ -6,7 +6,7 @@ import {
   isSupportedResourceType,
   isNode,
 } from "./types";
-import { b2a } from "./utils";
+import { hash } from "./utils";
 
 type Vertex = {
   name: string;
@@ -105,7 +105,7 @@ export class Flowchart {
     }
   }
 
-  plot(entire: boolean) {
+  plot(entire: boolean, shouldHash: boolean = false) {
     const statements: string[] = [];
     const checksheet: {
       [key: string]: {
@@ -145,7 +145,7 @@ export class Flowchart {
         checksheet[vertex.name].isDownstream ||
         checksheet[vertex.name].isUpstream
       ) {
-        statements.push(...vertexStatements(vertex));
+        statements.push(...vertexStatements(vertex, shouldHash));
       }
     });
     this.edges.forEach((edge) => {
@@ -154,7 +154,7 @@ export class Flowchart {
         checksheet[edge.parent].isDownstream ||
         checksheet[edge.child].isUpstream
       ) {
-        statements.push(...edgeStatements(edge));
+        statements.push(...edgeStatements(edge, shouldHash));
       }
     });
 
@@ -164,7 +164,7 @@ export class Flowchart {
   }
 }
 
-function vertexStatements(vertex: Vertex) {
+function vertexStatements(vertex: Vertex, shouldHash: boolean) {
   const statements = [];
   const splited = vertex.name.split(".");
   const text = splited.slice(2).join(".");
@@ -211,26 +211,25 @@ function vertexStatements(vertex: Vertex) {
     default:
       throw "unnexpected resource status";
   }
-  // NOTE
-  // name may contain special character (e.g. white space)
-  // which is not allowed in flowchart id
-  const id = b2a(vertex.name);
+  const id = hash(vertex.name, shouldHash);
   statements.push(`${id}("${text}")`);
   statements.push(`style ${id} ${style.join(",")}`);
   return statements;
 }
 
-function edgeStatements(edge: Edge) {
+function edgeStatements(edge: Edge, shouldHash: boolean) {
   const statements: string[] = [];
+  const parent = hash(edge.parent, shouldHash);
+  const child = hash(edge.child, shouldHash);
   switch (edge.status) {
     case "deleted":
-      statements.push(`${b2a(edge.parent)} -.-> ${b2a(edge.child)}`);
+      statements.push(`${parent} -.-> ${child}`);
       break;
     case "identical":
-      statements.push(`${b2a(edge.parent)} --> ${b2a(edge.child)}`);
+      statements.push(`${parent} --> ${child}`);
       break;
     case "new":
-      statements.push(`${b2a(edge.parent)} ==> ${b2a(edge.child)}`);
+      statements.push(`${parent} ==> ${child}`);
       break;
   }
   return statements;

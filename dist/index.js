@@ -28926,7 +28926,7 @@ class Flowchart {
             }
         }
     }
-    plot(entire) {
+    plot(entire, shouldHash = false) {
         const statements = [];
         const checksheet = {};
         this.vertices.forEach((vertex) => {
@@ -28961,14 +28961,14 @@ class Flowchart {
             if (entire ||
                 checksheet[vertex.name].isDownstream ||
                 checksheet[vertex.name].isUpstream) {
-                statements.push(...vertexStatements(vertex));
+                statements.push(...vertexStatements(vertex, shouldHash));
             }
         });
         this.edges.forEach((edge) => {
             if (entire ||
                 checksheet[edge.parent].isDownstream ||
                 checksheet[edge.child].isUpstream) {
-                statements.push(...edgeStatements(edge));
+                statements.push(...edgeStatements(edge, shouldHash));
             }
         });
         const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
@@ -28976,7 +28976,7 @@ class Flowchart {
     }
 }
 exports.Flowchart = Flowchart;
-function vertexStatements(vertex) {
+function vertexStatements(vertex, shouldHash) {
     const statements = [];
     const splited = vertex.name.split(".");
     const text = splited.slice(2).join(".");
@@ -29023,25 +29023,24 @@ function vertexStatements(vertex) {
         default:
             throw "unnexpected resource status";
     }
-    // NOTE
-    // name may contain special character (e.g. white space)
-    // which is not allowed in flowchart id
-    const id = (0, utils_1.b2a)(vertex.name);
+    const id = (0, utils_1.hash)(vertex.name, shouldHash);
     statements.push(`${id}("${text}")`);
     statements.push(`style ${id} ${style.join(",")}`);
     return statements;
 }
-function edgeStatements(edge) {
+function edgeStatements(edge, shouldHash) {
     const statements = [];
+    const parent = (0, utils_1.hash)(edge.parent, shouldHash);
+    const child = (0, utils_1.hash)(edge.child, shouldHash);
     switch (edge.status) {
         case "deleted":
-            statements.push(`${(0, utils_1.b2a)(edge.parent)} -.-> ${(0, utils_1.b2a)(edge.child)}`);
+            statements.push(`${parent} -.-> ${child}`);
             break;
         case "identical":
-            statements.push(`${(0, utils_1.b2a)(edge.parent)} --> ${(0, utils_1.b2a)(edge.child)}`);
+            statements.push(`${parent} --> ${child}`);
             break;
         case "new":
-            statements.push(`${(0, utils_1.b2a)(edge.parent)} ==> ${(0, utils_1.b2a)(edge.child)}`);
+            statements.push(`${parent} ==> ${child}`);
             break;
     }
     return statements;
@@ -29142,7 +29141,8 @@ async function main() {
         back();
     }
     const drawEntireLineage = core.getInput("draw-entire-lineage").toLowerCase() === "true";
-    const chart = mainChart.plot(drawEntireLineage);
+    const saveTextSize = core.getInput("save-text-size").toLocaleLowerCase() === "true";
+    const chart = mainChart.plot(drawEntireLineage, saveTextSize);
     const outpath = `${process.cwd()}/lineage.mermaid`;
     await fs.writeFile(outpath, chart);
     core.setOutput("filepath", outpath);
@@ -29258,25 +29258,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.go = exports.a2b = exports.b2a = exports.exec = void 0;
+exports.go = exports.hash = exports.exec = void 0;
 const node_util_1 = __importDefault(__nccwpck_require__(7261));
+const crypto = __importStar(__nccwpck_require__(6113));
 const child_process = __importStar(__nccwpck_require__(2081));
 const process = __importStar(__nccwpck_require__(7282));
 exports.exec = node_util_1.default.promisify(child_process.exec);
-function b2a(str) {
-    const b64 = btoa(encodeURIComponent(str))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "");
-    return b64;
+function hash(text, shouldHash = false) {
+    if (shouldHash) {
+        return crypto.createHash("sha1").update(text).digest("hex").slice(0, 8);
+    }
+    return text;
 }
-exports.b2a = b2a;
-function a2b(b64) {
-    // it seems that padding (=) is not needed
-    const str = b64.replace(/-/g, "+").replace(/_/g, "\\");
-    return decodeURIComponent(atob(str));
-}
-exports.a2b = a2b;
+exports.hash = hash;
 function go(path) {
     const curr = process.cwd();
     process.chdir(path);
