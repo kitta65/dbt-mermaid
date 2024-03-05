@@ -28842,10 +28842,37 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Flowchart = void 0;
+exports.Flowchart = exports.generateClassDefStatements = void 0;
 const fs = __importStar(__nccwpck_require__(3292));
 const types_1 = __nccwpck_require__(5077);
 const utils_1 = __nccwpck_require__(1314);
+const classColors = ["green", "blue", "orange"];
+const classStyles = ["Normal", "Bold", "Dash"];
+function generateClassDefStatements() {
+    const statements = [];
+    for (const color of classColors) {
+        for (const style of classStyles) {
+            const stroke = [];
+            switch (style) {
+                case "Normal":
+                    stroke.push("stroke-width:0px");
+                    break;
+                case "Bold":
+                    stroke.push("stroke-width:4px");
+                    break;
+                case "Dash":
+                    stroke.push("stroke-width:4px");
+                    stroke.push("stroke-dasharray: 5 5");
+                    break;
+                default:
+                    throw "unnexpected style";
+            }
+            statements.push(`classDef ${color}${style} color:white,stroke:black,fill:${color},${stroke.join(",")}`);
+        }
+    }
+    return statements;
+}
+exports.generateClassDefStatements = generateClassDefStatements;
 class Flowchart {
     manifest;
     vertices;
@@ -28927,7 +28954,7 @@ class Flowchart {
         }
     }
     plot(entire, shouldHash = false) {
-        const statements = [];
+        const statements = generateClassDefStatements();
         const checksheet = {};
         this.vertices.forEach((vertex) => {
             checksheet[vertex.name] = {
@@ -28961,14 +28988,14 @@ class Flowchart {
             if (entire ||
                 checksheet[vertex.name].isDownstream ||
                 checksheet[vertex.name].isUpstream) {
-                statements.push(...vertexStatements(vertex, shouldHash));
+                statements.push(vertexStatement(vertex, shouldHash));
             }
         });
         this.edges.forEach((edge) => {
             if (entire ||
                 checksheet[edge.parent].isDownstream ||
                 checksheet[edge.child].isUpstream) {
-                statements.push(...edgeStatements(edge, shouldHash));
+                statements.push(edgeStatement(edge, shouldHash));
             }
         });
         const mermaid = "flowchart LR\n" + statements.map((stmt) => "  " + stmt + ";\n").join("");
@@ -28976,74 +29003,73 @@ class Flowchart {
     }
 }
 exports.Flowchart = Flowchart;
-function vertexStatements(vertex, shouldHash) {
-    const statements = [];
+function vertexStatement(vertex, shouldHash) {
     const splited = vertex.name.split(".");
     const text = splited.slice(2).join(".");
-    const style = ["color:white", "stroke:black"];
+    let color;
     switch (vertex.type) {
         case "source":
-            style.push("fill:green");
+            color = "green";
             break;
         case "seed":
-            style.push("fill:blue");
+            color = "blue";
             break;
         case "model":
-            style.push("fill:blue");
+            color = "blue";
             break;
         case "snapshot":
-            style.push("fill:blue");
+            color = "blue";
             break;
         case "exposure":
-            style.push("fill:orange");
+            color = "orange";
             break;
         case "analysis":
-            style.push("fill:blue");
+            color = "blue";
             break;
         case "test":
-            style.push("fill:blue");
+            color = "blue";
             break;
         default:
             throw "unnexpected resource type";
     }
+    let style;
     switch (vertex.status) {
         case "deleted":
-            style.push("stroke-width:4px");
-            style.push("stroke-dasharray: 5 5");
+            style = "Dash";
             break;
         case "identical":
-            style.push("stroke-width:0px");
+            style = "Normal";
             break;
         case "modified":
-            style.push("stroke-width:4px");
+            style = "Bold";
             break;
         case "new":
-            style.push("stroke-width:4px");
+            style = "Bold";
             break;
         default:
             throw "unnexpected resource status";
     }
     const id = (0, utils_1.hash)(vertex.name, shouldHash);
-    statements.push(`${id}("${text}")`);
-    statements.push(`style ${id} ${style.join(",")}`);
-    return statements;
+    return `${id}("${text}"):::${color}${style}`;
 }
-function edgeStatements(edge, shouldHash) {
-    const statements = [];
+function edgeStatement(edge, shouldHash) {
     const parent = (0, utils_1.hash)(edge.parent, shouldHash);
     const child = (0, utils_1.hash)(edge.child, shouldHash);
+    let statement;
     switch (edge.status) {
         case "deleted":
-            statements.push(`${parent} -.-> ${child}`);
+            statement = `${parent} -.-> ${child}`;
             break;
         case "identical":
-            statements.push(`${parent} --> ${child}`);
+            statement = `${parent} --> ${child}`;
             break;
         case "new":
-            statements.push(`${parent} ==> ${child}`);
+            statement = `${parent} ==> ${child}`;
             break;
+        default:
+            throw "unnexpected status";
     }
-    return statements;
+    return statement;
 }
 
 

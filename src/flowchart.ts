@@ -21,6 +21,38 @@ type Edge = {
   status: Status;
 };
 
+const classColors = ["green", "blue", "orange"] as const;
+type ClassColor = (typeof classColors)[number];
+const classStyles = ["Normal", "Bold", "Dash"] as const;
+type ClassStyle = (typeof classStyles)[number];
+
+export function generateClassDefStatements() {
+  const statements: string[] = [];
+  for (const color of classColors) {
+    for (const style of classStyles) {
+      const stroke = [];
+      switch (style) {
+        case "Normal":
+          stroke.push("stroke-width:0px");
+          break;
+        case "Bold":
+          stroke.push("stroke-width:4px");
+          break;
+        case "Dash":
+          stroke.push("stroke-width:4px");
+          stroke.push("stroke-dasharray: 5 5");
+          break;
+        default:
+          throw "unnexpected style";
+      }
+      statements.push(
+        `classDef ${color}${style} color:white,stroke:black,fill:${color},${stroke.join(",")}`,
+      );
+    }
+  }
+  return statements;
+}
+
 export class Flowchart {
   private vertices: Vertex[];
   private edges: Edge[];
@@ -106,7 +138,7 @@ export class Flowchart {
   }
 
   plot(entire: boolean, shouldHash: boolean = false) {
-    const statements: string[] = [];
+    const statements = generateClassDefStatements();
     const checksheet: {
       [key: string]: {
         isUpstream: boolean;
@@ -145,7 +177,7 @@ export class Flowchart {
         checksheet[vertex.name].isDownstream ||
         checksheet[vertex.name].isUpstream
       ) {
-        statements.push(...vertexStatements(vertex, shouldHash));
+        statements.push(vertexStatement(vertex, shouldHash));
       }
     });
     this.edges.forEach((edge) => {
@@ -154,7 +186,7 @@ export class Flowchart {
         checksheet[edge.parent].isDownstream ||
         checksheet[edge.child].isUpstream
       ) {
-        statements.push(...edgeStatements(edge, shouldHash));
+        statements.push(edgeStatement(edge, shouldHash));
       }
     });
 
@@ -164,73 +196,72 @@ export class Flowchart {
   }
 }
 
-function vertexStatements(vertex: Vertex, shouldHash: boolean) {
-  const statements = [];
+function vertexStatement(vertex: Vertex, shouldHash: boolean) {
   const splited = vertex.name.split(".");
   const text = splited.slice(2).join(".");
-  const style: string[] = ["color:white", "stroke:black"];
+  let color: ClassColor;
   switch (vertex.type) {
     case "source":
-      style.push("fill:green");
+      color = "green";
       break;
     case "seed":
-      style.push("fill:blue");
+      color = "blue";
       break;
     case "model":
-      style.push("fill:blue");
+      color = "blue";
       break;
     case "snapshot":
-      style.push("fill:blue");
+      color = "blue";
       break;
     case "exposure":
-      style.push("fill:orange");
+      color = "orange";
       break;
     case "analysis":
-      style.push("fill:blue");
+      color = "blue";
       break;
     case "test":
-      style.push("fill:blue");
+      color = "blue";
       break;
     default:
       throw "unnexpected resource type";
   }
+  let style: ClassStyle;
   switch (vertex.status) {
     case "deleted":
-      style.push("stroke-width:4px");
-      style.push("stroke-dasharray: 5 5");
+      style = "Dash";
       break;
     case "identical":
-      style.push("stroke-width:0px");
+      style = "Normal";
       break;
     case "modified":
-      style.push("stroke-width:4px");
+      style = "Bold";
       break;
     case "new":
-      style.push("stroke-width:4px");
+      style = "Bold";
       break;
     default:
       throw "unnexpected resource status";
   }
   const id = hash(vertex.name, shouldHash);
-  statements.push(`${id}("${text}")`);
-  statements.push(`style ${id} ${style.join(",")}`);
-  return statements;
+  return `${id}("${text}"):::${color}${style}`;
 }
 
-function edgeStatements(edge: Edge, shouldHash: boolean) {
-  const statements: string[] = [];
+function edgeStatement(edge: Edge, shouldHash: boolean) {
   const parent = hash(edge.parent, shouldHash);
   const child = hash(edge.child, shouldHash);
+  let statement: string;
   switch (edge.status) {
     case "deleted":
-      statements.push(`${parent} -.-> ${child}`);
+      statement = `${parent} -.-> ${child}`;
       break;
     case "identical":
-      statements.push(`${parent} --> ${child}`);
+      statement = `${parent} --> ${child}`;
       break;
     case "new":
-      statements.push(`${parent} ==> ${child}`);
+      statement = `${parent} ==> ${child}`;
       break;
+    default:
+      throw "unnexpected status";
   }
-  return statements;
+  return statement;
 }
