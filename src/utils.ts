@@ -7,7 +7,7 @@ export const exec = util.promisify(child_process.exec);
 
 export function hash(text: string, shouldHash: boolean = false): string {
   if (shouldHash) {
-    return crypto.createHash("sha1").update(text).digest("hex").slice(0, 8);
+    return crypto.createHash("sha1").update(text).digest("hex").slice(0, 7);
   }
   return text;
 }

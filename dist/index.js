@@ -29292,7 +29292,7 @@ const process = __importStar(__nccwpck_require__(7282));
 exports.exec = node_util_1.default.promisify(child_process.exec);
 function hash(text, shouldHash = false) {
     if (shouldHash) {
-        return crypto.createHash("sha1").update(text).digest("hex").slice(0, 8);
+        return crypto.createHash("sha1").update(text).digest("hex").slice(0, 7);
     }
     return text;
 }
