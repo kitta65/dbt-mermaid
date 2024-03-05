@@ -1,4 +1,4 @@
-# [WIP] DBT Mermaid
+# dbt-mermaid
 
 This action draws lineage graph of your dbt project as [mermaid](https://mermaid.js.org/) flowchart.
 
