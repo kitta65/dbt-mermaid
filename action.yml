@@ -1,5 +1,8 @@
 name: "dbt mermaid"
 description: "Draw mermaid flowchart from your dbt project"
+branding:
+  icon: "bar-chart"
+  color: "green"
 inputs:
   dbt-version:
     description: "dbt version"
@@ -20,7 +23,6 @@ inputs:
     description: "if true, replace dbt resource name with short hash to save text size"
     required: true
     default: false
-
 outputs:
   filepath:
     description: "The filepath of the mermaid flowchart"
