@@ -1,8 +1,7 @@
 {
   "private": true,
-  "name": "dbt-mermaid",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.0",
+  "description": "draw lineage graph of your dbt project as mermaid flowchart",
   "main": "index.js",
   "scripts": {
     "build": "ncc build src/index.ts --license licenses.txt",
