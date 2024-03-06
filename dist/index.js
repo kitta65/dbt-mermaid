@@ -28813,6 +28813,38 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 5575:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isDBTProjectYml = exports.isSupportedResourceType = exports.supportedResourceTypes = exports.isNode = void 0;
+function isNode(resource) {
+    return "checksum" in resource;
+}
+exports.isNode = isNode;
+exports.supportedResourceTypes = [
+    "source",
+    "seed",
+    "model",
+    "snapshot",
+    "exposure",
+    "analysis",
+    "test",
+];
+function isSupportedResourceType(s) {
+    return exports.supportedResourceTypes.some((t) => t === s);
+}
+exports.isSupportedResourceType = isSupportedResourceType;
+function isDBTProjectYml(value) {
+    return typeof value === "object" && value !== null && "profile" in value;
+}
+exports.isDBTProjectYml = isDBTProjectYml;
+
+
+/***/ }),
+
 /***/ 3679:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -28844,7 +28876,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Flowchart = exports.generateClassDefStatements = void 0;
 const fs = __importStar(__nccwpck_require__(3292));
-const types_1 = __nccwpck_require__(5077);
+const dbt_1 = __nccwpck_require__(5575);
 const utils_1 = __nccwpck_require__(1314);
 const classColors = ["green", "blue", "orange"];
 const classStyles = ["Normal", "Bold", "Dash"];
@@ -28888,16 +28920,16 @@ class Flowchart {
             const splited = key.split(".");
             const type_ = splited[0];
             // ignore unsupported resources
-            if (!(0, types_1.isSupportedResourceType)(type_))
+            if (!(0, dbt_1.isSupportedResourceType)(type_))
                 continue;
             // ignore generic test
-            if ((0, types_1.isNode)(value) && value.checksum.checksum === "")
+            if ((0, dbt_1.isNode)(value) && value.checksum.checksum === "")
                 continue;
             this.vertices.push({
                 name: key,
                 type: type_,
                 status: "identical",
-                hash: (0, types_1.isNode)(value) ? value.checksum.checksum : "",
+                hash: (0, dbt_1.isNode)(value) ? value.checksum.checksum : "",
             });
         }
         this.edges = [];
@@ -29151,7 +29183,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const process = __importStar(__nccwpck_require__(7282));
 const yaml = __importStar(__nccwpck_require__(1917));
 const utils_1 = __nccwpck_require__(1314);
-const types_1 = __nccwpck_require__(5077);
+const dbt_1 = __nccwpck_require__(5575);
 const flowchart_1 = __nccwpck_require__(3679);
 async function main() {
     const back = (0, utils_1.go)(core.getInput("dbt-project"));
@@ -29199,7 +29231,7 @@ async function preprocess() {
         .readFile("./dbt_project.yml")
         .then((buf) => buf.toString())
         .then((str) => yaml.load(str));
-    if (!(0, types_1.isDBTProjectYml)(obj)) {
+    if (!(0, dbt_1.isDBTProjectYml)(obj)) {
         throw "cannot read profile name from dbt_project.yml";
     }
     let cleanup = async () => await fs.unlink(profiles);
@@ -29216,38 +29248,6 @@ async function preprocess() {
     await (0, utils_1.exec)(`pipx run --spec dbt-postgres==${dbtVersion} dbt ls`);
     await cleanup();
 }
-
-
-/***/ }),
-
-/***/ 5077:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isDBTProjectYml = exports.isSupportedResourceType = exports.supportedResourceTypes = exports.isNode = void 0;
-function isNode(resource) {
-    return "checksum" in resource;
-}
-exports.isNode = isNode;
-exports.supportedResourceTypes = [
-    "source",
-    "seed",
-    "model",
-    "snapshot",
-    "exposure",
-    "analysis",
-    "test",
-];
-function isSupportedResourceType(s) {
-    return exports.supportedResourceTypes.some((t) => t === s);
-}
-exports.isSupportedResourceType = isSupportedResourceType;
-function isDBTProjectYml(value) {
-    return typeof value === "object" && value !== null && "profile" in value;
-}
-exports.isDBTProjectYml = isDBTProjectYml;
 
 
 /***/ }),

@@ -3,7 +3,7 @@ import * as core from "@actions/core";
 import * as process from "process";
 import * as yaml from "js-yaml";
 import { exec, go } from "./utils";
-import { isDBTProjectYml } from "./types";
+import { isDBTProjectYml } from "./dbt";
 import { Flowchart } from "./flowchart";
 
 export async function main() {

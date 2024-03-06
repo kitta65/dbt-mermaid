@@ -1,11 +1,10 @@
 import * as fs from "fs/promises";
 import {
-  ManifestData,
+  Manifest,
   SupportedResourceType,
-  Status,
   isSupportedResourceType,
   isNode,
-} from "./types";
+} from "./dbt";
 import { hash } from "./utils";
 
 type Vertex = {
@@ -20,6 +19,8 @@ type Edge = {
   child: string;
   status: Status;
 };
+
+type Status = "identical" | "modified" | "new" | "deleted";
 
 const classColors = ["green", "blue", "orange"] as const;
 type ClassColor = (typeof classColors)[number];
@@ -56,7 +57,7 @@ export function generateClassDefStatements() {
 export class Flowchart {
   private vertices: Vertex[];
   private edges: Edge[];
-  constructor(private readonly manifest: ManifestData) {
+  constructor(private readonly manifest: Manifest) {
     this.vertices = [];
     for (const [key, value] of Object.entries({
       ...manifest.sources,
