@@ -16,7 +16,7 @@ inputs:
     description: "if specified, the differences between two dbt projects are shown"
     required: false
   draw-entire-lineage:
-    description: if false, draw only modified nodes, its children and its parents
+    description: "if false, draw only the differences of two dbt projects and relevant part"
     required: true
     default: true
   save-text-size:
