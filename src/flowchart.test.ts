@@ -3,7 +3,23 @@ import { hash } from "./utils";
 
 const classDefStatements = generateClassDefStatements().join(";\n  ") + ";";
 
-describe("flowchart", () => {
+describe("generateClassDefStatement", () => {
+  test("generateClassDefStatement", () => {
+    expect(generateClassDefStatements()).toStrictEqual([
+      "classDef greenNormal color:white,stroke:black,fill:green,stroke-width:0px",
+      "classDef greenBold color:white,stroke:black,fill:green,stroke-width:4px",
+      "classDef greenDash color:white,stroke:black,fill:green,stroke-width:4px,stroke-dasharray: 5 5",
+      "classDef blueNormal color:white,stroke:black,fill:blue,stroke-width:0px",
+      "classDef blueBold color:white,stroke:black,fill:blue,stroke-width:4px",
+      "classDef blueDash color:white,stroke:black,fill:blue,stroke-width:4px,stroke-dasharray: 5 5",
+      "classDef orangeNormal color:white,stroke:black,fill:orange,stroke-width:0px",
+      "classDef orangeBold color:white,stroke:black,fill:orange,stroke-width:4px",
+      "classDef orangeDash color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5",
+    ]);
+  });
+});
+
+describe("plot", () => {
   test("draw empty flowchart", () => {
     const flowchart = new Flowchart({
       sources: {},
