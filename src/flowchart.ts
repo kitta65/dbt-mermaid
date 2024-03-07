@@ -57,7 +57,10 @@ export function generateClassDefStatements() {
 export class Flowchart {
   private vertices: Vertex[];
   private edges: Edge[];
-  constructor(private readonly manifest: Manifest) {
+  constructor(
+    private readonly manifest: Manifest,
+    private readonly ignore: { [key in SupportedResourceType]?: boolean } = {},
+  ) {
     this.vertices = [];
     for (const [key, value] of Object.entries({
       ...manifest.sources,
@@ -66,10 +69,19 @@ export class Flowchart {
     })) {
       const splited = key.split(".");
       const type_ = splited[0];
+
       // ignore unsupported resources
       if (!isSupportedResourceType(type_)) continue;
       // ignore generic test
       if (isNode(value) && value.checksum.checksum === "") continue;
+      // ignore specified resouce type
+      let shouldContinue = false;
+      for (const [key, value] of Object.entries(ignore)) {
+        if (!value) continue;
+        if (type_ === key) shouldContinue = true;
+      }
+      if (shouldContinue) continue;
+
       this.vertices.push({
         name: key,
         type: type_,
@@ -91,12 +103,15 @@ export class Flowchart {
     }
   }
 
-  static async from(filepath: string): Promise<Flowchart> {
+  static async from(
+    filepath: string,
+    ignore: { [key in SupportedResourceType]?: boolean } = {},
+  ): Promise<Flowchart> {
     const manifest = await fs
       .readFile(filepath)
       .then((buffer) => String(buffer))
       .then((json) => JSON.parse(json));
-    return new Flowchart(manifest);
+    return new Flowchart(manifest, ignore);
   }
 
   compare(flowchart: Flowchart) {

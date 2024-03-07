@@ -3,20 +3,30 @@ import * as core from "@actions/core";
 import * as process from "process";
 import * as yaml from "js-yaml";
 import { exec, go, isTrue } from "./utils";
-import { isDBTProjectYml } from "./dbt";
+import { SupportedResourceType, isDBTProjectYml } from "./dbt";
 import { Flowchart } from "./flowchart";
 
 export async function main() {
   const back = go(core.getInput("dbt-project"));
   await preprocess();
-  const mainChart = await Flowchart.from("./target/manifest.json");
+
+  const ignore: { [key in SupportedResourceType]: boolean } = {
+    source: isTrue("ignore-sources"),
+    seed: isTrue("ignore-seeds"),
+    model: false,
+    snapshot: isTrue("ignore-snapshots"),
+    exposure: isTrue("ignore-exposures"),
+    analysis: isTrue("ignore-analyses"),
+    test: isTrue("ignore-tests"),
+  };
+  const mainChart = await Flowchart.from("./target/manifest.json", ignore);
   back();
 
   const anotherProject = core.getInput("dbt-project-to-compare-with");
   if (anotherProject) {
     const back = go(anotherProject);
     await preprocess();
-    const anotherChart = await Flowchart.from("./target/manifest.json");
+    const anotherChart = await Flowchart.from("./target/manifest.json", ignore);
     mainChart.compare(anotherChart);
     back();
   }

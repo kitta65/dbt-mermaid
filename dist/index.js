@@ -28907,10 +28907,12 @@ function generateClassDefStatements() {
 exports.generateClassDefStatements = generateClassDefStatements;
 class Flowchart {
     manifest;
+    ignore;
     vertices;
     edges;
-    constructor(manifest) {
+    constructor(manifest, ignore = {}) {
         this.manifest = manifest;
+        this.ignore = ignore;
         this.vertices = [];
         for (const [key, value] of Object.entries({
             ...manifest.sources,
@@ -28924,6 +28926,16 @@ class Flowchart {
                 continue;
             // ignore generic test
             if ((0, dbt_1.isNode)(value) && value.checksum.checksum === "")
+                continue;
+            // ignore specified resouce type
+            let shouldContinue = false;
+            for (const [key, value] of Object.entries(ignore)) {
+                if (!value)
+                    continue;
+                if (type_ === key)
+                    shouldContinue = true;
+            }
+            if (shouldContinue)
                 continue;
             this.vertices.push({
                 name: key,
@@ -28942,12 +28954,12 @@ class Flowchart {
             }
         }
     }
-    static async from(filepath) {
+    static async from(filepath, ignore = {}) {
         const manifest = await fs
             .readFile(filepath)
             .then((buffer) => String(buffer))
             .then((json) => JSON.parse(json));
-        return new Flowchart(manifest);
+        return new Flowchart(manifest, ignore);
     }
     compare(flowchart) {
         for (const vertex of this.vertices) {
@@ -29188,13 +29200,22 @@ const flowchart_1 = __nccwpck_require__(3679);
 async function main() {
     const back = (0, utils_1.go)(core.getInput("dbt-project"));
     await preprocess();
-    const mainChart = await flowchart_1.Flowchart.from("./target/manifest.json");
+    const ignore = {
+        source: (0, utils_1.isTrue)("ignore-sources"),
+        seed: (0, utils_1.isTrue)("ignore-seeds"),
+        model: false,
+        snapshot: (0, utils_1.isTrue)("ignore-snapshots"),
+        exposure: (0, utils_1.isTrue)("ignore-exposures"),
+        analysis: (0, utils_1.isTrue)("ignore-analyses"),
+        test: (0, utils_1.isTrue)("ignore-tests"),
+    };
+    const mainChart = await flowchart_1.Flowchart.from("./target/manifest.json", ignore);
     back();
     const anotherProject = core.getInput("dbt-project-to-compare-with");
     if (anotherProject) {
         const back = (0, utils_1.go)(anotherProject);
         await preprocess();
-        const anotherChart = await flowchart_1.Flowchart.from("./target/manifest.json");
+        const anotherChart = await flowchart_1.Flowchart.from("./target/manifest.json", ignore);
         mainChart.compare(anotherChart);
         back();
     }
