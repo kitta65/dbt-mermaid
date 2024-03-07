@@ -23,6 +23,30 @@ inputs:
     description: "if true, replace dbt resource name with short hash to save text size"
     required: true
     default: false
+  ignore-sources:
+    description: "if true, do not draw sources"
+    required: true
+    default: false
+  ignore-seeds:
+    description: "if true, do not draw seeds"
+    required: true
+    default: false
+  ignore-snapshots:
+    description: "if true, do not draw snapshots"
+    required: true
+    default: false
+  ignore-exposures:
+    description: "if true, do not draw exposures"
+    required: true
+    default: false
+  ignore-analyses:
+    description: "if true, do not draw analyses"
+    required: true
+    default: false
+  ignore-tests:
+    description: "if true, do not draw tests"
+    required: true
+    default: false
 outputs:
   filepath:
     description: "The filepath of the mermaid flowchart"
