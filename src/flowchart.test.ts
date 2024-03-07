@@ -280,4 +280,46 @@ describe("plot", () => {
 `;
     expect(actual).toBe(expected);
   });
+
+  test("ignore specified resource type (sources)", () => {
+    const flowchart = new Flowchart(
+      {
+        sources: { "source.project.a": {} },
+        nodes: {},
+        exposures: {},
+        child_map: {},
+      },
+      { source: true },
+    );
+    const actual = flowchart.plot(true);
+    const expected = `flowchart LR
+  ${classDefStatements}
+`;
+    expect(actual).toBe(expected);
+  });
+
+  test("ignore specified resource type (snapshots)", () => {
+    const a = "source.project.a";
+    const b = "snapshot.project.b";
+    const c = "analysis.project.c";
+    const flowchart = new Flowchart(
+      {
+        sources: { [a]: {} },
+        nodes: {
+          [b]: { checksum: { checksum: "anyvalue" } },
+          [c]: { checksum: { checksum: "anyvalue" } },
+        },
+        exposures: {},
+        child_map: { [a]: [b], [b]: [c] },
+      },
+      { snapshot: true },
+    );
+    const actual = flowchart.plot(true);
+    const expected = `flowchart LR
+  ${classDefStatements}
+  source.project.a("a"):::greenNormal;
+  analysis.project.c("c"):::blueNormal;
+`;
+    expect(actual).toBe(expected);
+  });
 });
