@@ -29198,8 +29198,8 @@ async function main() {
         mainChart.compare(anotherChart);
         back();
     }
-    const drawEntireLineage = core.getInput("draw-entire-lineage").toLowerCase() === "true";
-    const saveTextSize = core.getInput("save-text-size").toLocaleLowerCase() === "true";
+    const drawEntireLineage = (0, utils_1.isTrue)("draw-entire-lineage");
+    const saveTextSize = (0, utils_1.isTrue)("save-text-size");
     const chart = mainChart.plot(drawEntireLineage, saveTextSize);
     const outpath = `${process.cwd()}/lineage.mermaid`;
     await fs.writeFile(outpath, chart);
@@ -29284,11 +29284,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.go = exports.hash = exports.exec = void 0;
+exports.isTrue = exports.go = exports.hash = exports.exec = void 0;
 const node_util_1 = __importDefault(__nccwpck_require__(7261));
 const crypto = __importStar(__nccwpck_require__(6113));
 const child_process = __importStar(__nccwpck_require__(2081));
 const process = __importStar(__nccwpck_require__(7282));
+const core = __importStar(__nccwpck_require__(2186));
 exports.exec = node_util_1.default.promisify(child_process.exec);
 function hash(text, shouldHash = false) {
     if (shouldHash) {
@@ -29303,6 +29304,11 @@ function go(path) {
     return () => process.chdir(curr);
 }
 exports.go = go;
+function isTrue(input) {
+    const str = core.getInput(input);
+    return str.toLowerCase() === "true";
+}
+exports.isTrue = isTrue;
 
 
 /***/ }),

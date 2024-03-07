@@ -2,7 +2,7 @@ import * as fs from "fs/promises";
 import * as core from "@actions/core";
 import * as process from "process";
 import * as yaml from "js-yaml";
-import { exec, go } from "./utils";
+import { exec, go, isTrue } from "./utils";
 import { isDBTProjectYml } from "./dbt";
 import { Flowchart } from "./flowchart";
 
@@ -20,10 +20,8 @@ export async function main() {
     mainChart.compare(anotherChart);
     back();
   }
-  const drawEntireLineage =
-    core.getInput("draw-entire-lineage").toLowerCase() === "true";
-  const saveTextSize =
-    core.getInput("save-text-size").toLocaleLowerCase() === "true";
+  const drawEntireLineage = isTrue("draw-entire-lineage");
+  const saveTextSize = isTrue("save-text-size");
   const chart = mainChart.plot(drawEntireLineage, saveTextSize);
   const outpath = `${process.cwd()}/lineage.mermaid`;
   await fs.writeFile(outpath, chart);
