@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: dbt-mermaid
-        uses: ./
+        uses: "./" # kitta65/dbt-mermaid@vX.X.X
         with:
           dbt-version: 1.7
           dbt-project: project
