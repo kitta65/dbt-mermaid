@@ -47,7 +47,7 @@ export function generateClassDefStatements() {
           throw "unnexpected style";
       }
       statements.push(
-        `classDef ${color}${style} color:white,stroke:black,fill:${color},${stroke.join(",")}`,
+        `classDef ${color}${style} color:white,stroke:fuchsia,fill:${color},${stroke.join(",")}`,
       );
     }
   }
