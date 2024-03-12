@@ -4,15 +4,15 @@ This action draws lineage graph of your dbt project as [mermaid](https://mermaid
 
 ```mermaid
 flowchart LR
-  classDef greenNormal color:white,stroke:black,fill:green,stroke-width:0px;
-  classDef greenBold color:white,stroke:black,fill:green,stroke-width:4px;
-  classDef greenDash color:white,stroke:black,fill:green,stroke-width:4px,stroke-dasharray: 5 5;
-  classDef blueNormal color:white,stroke:black,fill:blue,stroke-width:0px;
-  classDef blueBold color:white,stroke:black,fill:blue,stroke-width:4px;
-  classDef blueDash color:white,stroke:black,fill:blue,stroke-width:4px,stroke-dasharray: 5 5;
-  classDef orangeNormal color:white,stroke:black,fill:orange,stroke-width:0px;
-  classDef orangeBold color:white,stroke:black,fill:orange,stroke-width:4px;
-  classDef orangeDash color:white,stroke:black,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
+  classDef greenNormal color:white,stroke:fuchsia,fill:green,stroke-width:0px;
+  classDef greenBold color:white,stroke:fuchsia,fill:green,stroke-width:4px;
+  classDef greenDash color:white,stroke:fuchsia,fill:green,stroke-width:4px,stroke-dasharray: 5 5;
+  classDef blueNormal color:white,stroke:fuchsia,fill:blue,stroke-width:0px;
+  classDef blueBold color:white,stroke:fuchsia,fill:blue,stroke-width:4px;
+  classDef blueDash color:white,stroke:fuchsia,fill:blue,stroke-width:4px,stroke-dasharray: 5 5;
+  classDef orangeNormal color:white,stroke:fuchsia,fill:orange,stroke-width:0px;
+  classDef orangeBold color:white,stroke:fuchsia,fill:orange,stroke-width:4px;
+  classDef orangeDash color:white,stroke:fuchsia,fill:orange,stroke-width:4px,stroke-dasharray: 5 5;
   source.dbt_mermaid.source.events("source.events"):::greenNormal;
   source.dbt_mermaid.source.users("source.users"):::greenNormal;
   source.dbt_mermaid.source.orders("source.orders"):::greenNormal;
