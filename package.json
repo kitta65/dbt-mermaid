@@ -29,7 +29,7 @@
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.2",
     "typescript": "^5.4.2",
-    "typescript-eslint": "^7.2.0"
+    "typescript-eslint": "^7.4.0"
   },
   "precommit": [
     "format",
