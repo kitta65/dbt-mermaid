@@ -1,6 +1,8 @@
 on:
   push:
     paths: "project/**"
+    branches:
+      - "**"
 jobs:
   main:
     runs-on: ubuntu-latest
