@@ -25,6 +25,6 @@ jobs:
       - id: dbt-mermaid
         uses: ./
         with:
-          dbt-version: 1.7
+          dbt-version: 1.7.11
           dbt-project: project
       - run: cat ${{ steps.dbt-mermaid.outputs.filepath }}
