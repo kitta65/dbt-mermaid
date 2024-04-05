@@ -13,7 +13,7 @@ jobs:
       - id: dbt-mermaid
         uses: "./" # kitta65/dbt-mermaid@vX.X.X
         with:
-          dbt-version: 1.7
+          dbt-version: 1.7.11
           dbt-project: project
           dbt-project-to-compare-with: base/project
           draw-entire-lineage: false
