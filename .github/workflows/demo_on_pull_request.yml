@@ -1,6 +1,4 @@
-on:
-  pull_request:
-    paths: "project/**"
+on: pull_request
 jobs:
   main:
     runs-on: ubuntu-latest
