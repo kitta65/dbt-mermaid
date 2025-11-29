@@ -7,7 +7,8 @@ with
         select
             users.user_id,
             sum(orders.amount) as total_amount,
-            min(orders.ordered_at) as min_orderd_at
+            min(orders.ordered_at) as min_orderd_at,
+            1 as one
         from users
         left join orders on user.user_id = orders.user_id
         group by 1
