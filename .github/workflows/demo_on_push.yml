@@ -1,9 +1,4 @@
-on:
-  push:
-    paths:
-      - "project/**"
-    branches:
-      - "**"
+on: push
 jobs:
   main:
     runs-on: ubuntu-latest
