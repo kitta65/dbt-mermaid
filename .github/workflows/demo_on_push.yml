@@ -1,6 +1,7 @@
 on:
   push:
-    paths: "project/**"
+    paths:
+      - "project/**"
     branches:
       - "**"
 jobs:

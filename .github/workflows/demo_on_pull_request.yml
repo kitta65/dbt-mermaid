@@ -1,6 +1,7 @@
 on:
   pull_request:
-    paths: "project/**"
+    paths:
+      - "project/**"
 jobs:
   main:
     runs-on: ubuntu-latest
